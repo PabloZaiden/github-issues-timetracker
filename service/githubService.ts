@@ -5,15 +5,11 @@ import * as K from "kwyjibo";
 
 export default class GithubService {
 
-    // TODO: Change for oauth2 tokens
-    private user: string;
-    private pass: string;
-
+    private accessToken: string;
     private github: Github;
 
-    constructor(user: string, pass: string) {
-        this.user = user;
-        this.pass = pass;
+    constructor(accessToken: string) {
+        this.accessToken = accessToken;
         this.github = new Github({
             protocol: "https",
             headers: {
@@ -22,9 +18,8 @@ export default class GithubService {
         });
 
         this.github.authenticate({
-            type: "basic",
-            username: user,
-            password: pass
+            type: "oauth",
+            token: accessToken
         });
 
     }

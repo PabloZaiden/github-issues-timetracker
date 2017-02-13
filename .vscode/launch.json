@@ -17,6 +17,7 @@
             "env": {
                 "NODE_ENV": "development"
             },
+            "envFile": "${workspaceRoot}/.env",
             "externalConsole": false,
             "sourceMaps": true,
             "outDir": null

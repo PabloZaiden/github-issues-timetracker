@@ -1,8 +1,13 @@
+import { SecurityProvider } from './middleware/securityProvider';
 import * as Express from "express";
 import * as CookieParser from "cookie-parser";
 import * as BodyParser from "body-parser";
 import * as Http from "http";
 import * as K from "kwyjibo";
+import Session = require("cookie-session");
+import * as Passport from "passport";
+import GithubSecurityProvider from "./middleware/githubSecurityProvider";
+
 
 export default class App {
 
@@ -10,7 +15,19 @@ export default class App {
     private static server: Http.Server;
     private static express: Express.Express;
     private static isDevelopment = false;
-    
+    private static securityProvider: SecurityProvider;
+
+    public static get authorize(): Express.Handler {
+        if (process.env.DISABLE_AUTH) {
+            return (req, res, next) => next();
+        } else {
+            return App.securityProvider.getAuthorizeMiddleware();
+        }
+    }
+
+    public static get authenticate(): Express.Handler {
+        return App.securityProvider.getAuthenticateMiddleware()
+    }
 
     public static init(): void {
         if (process.env.NODE_ENV === "development") {
@@ -29,7 +46,40 @@ export default class App {
         App.express.use(BodyParser.urlencoded({ extended: false }));
         App.express.use(CookieParser());
 
-        
+        let sessionSecret = process.env.SESSION_SECRET;
+        if (!sessionSecret) {
+            throw new Error("Missing SESSION_SECRET");
+        }
+
+        let callbackUrl: string = process.env.GITHUB_CALLBACK_URL;
+        if (callbackUrl == undefined) {
+            callbackUrl = "";
+        }
+
+        let isHttps = callbackUrl.toLowerCase().startsWith("https");
+
+        App.express.use(Session({
+            secureProxy: isHttps,
+            name: "session",
+            secret: sessionSecret,
+            httpOnly: true
+        }));
+        App.express.use(Passport.initialize());
+        App.express.use(Passport.session());
+
+        Passport.serializeUser(function (user, done) {
+            done(null, user);
+        });
+
+        Passport.deserializeUser(function (user: any, done) {
+            if (user == undefined || user.accessToken == null) {
+                user = undefined;
+            }
+
+            done(null, user);
+        });
+
+        App.securityProvider = new GithubSecurityProvider("/auth/callback");
     }
 
     public static start(): void {

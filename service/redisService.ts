@@ -39,15 +39,36 @@ export default class RedisService {
         await Async.promise<string, void>(client.del, client)(key);
     }
 
-    async getList(key: string): any[] {
+    async getListLength(key: string) {
+        let client = await this.getClient();
+        return Async.promise<string, number>(client.llen, client)(key);
+    }
+
+    async getList(key: string) {
+        let length = await this.getListLength(key);
+        let client = await this.getClient();
+        let payload = await Async.promise<string, number, number, any[]>(client.lrange, client)(key, 0, length);
+        return payload.map(p => {
+            return JSON.parse(p);
+        });
+    }
+
+    async getListElement(key: string, index: number) {
+        let client = await this.getClient();
+        let payload = await Async.promise<string, number, string>(client.lindex, client)(key, index);
+        return JSON.parse(payload);
     }
 
     async addToList(key: string, item: any) {
-
+        let client = await this.getClient();
+        return Async.promise<string, string, void>(client.lpush, client)(key, JSON.stringify(item));
     }
 
-    async replaceList(key: string, item: any[]) {
+    async removeFromList(key: string, index: number) {
+        let client = await this.getClient();
+        let payload = await Async.promise<string, number, string>(client.lindex, client)(key, index);
 
+        return Async.promise<string, number, string, void>(client.lrem, client)(key, -1, payload);
     }
 
     private getClient(): Promise<Redis.RedisClient> {
@@ -56,7 +77,6 @@ export default class RedisService {
                 resolve(this.client);
             } else {
                 this.client = Redis.createClient(this.port, this.host);
-
                 this.client.on("ready", () => {
                     Async.promise<number, void>(this.client.select, this.client)(this.db).then(() => {
                         resolve(this.client);

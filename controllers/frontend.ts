@@ -5,12 +5,18 @@ import Github from "../service/githubService";
 
 
 @Controller("/frontend")
+@K.Middleware(App.authorize)
 @DocController("Sample frontend Controller.")
 class Frontend {
 
     @Get("/")
     index(context: Context): void {
-        context.response.redirect(K.getActionRoute(Frontend, "projects"));
+        context.response.redirect(K.getActionRoute(Frontend, "loggedIn"));
+    }
+
+    @Get()
+    loggedIn(context: Context) {
+        return context.request.user;
     }
 
     @Get()
