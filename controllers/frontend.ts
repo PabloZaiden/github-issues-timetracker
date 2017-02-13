@@ -15,6 +15,7 @@ class Frontend {
 
     @Get()
     projects(context: Context): SuperRenderable {
+        /*
         let gh = new Github();
 
         let projects = gh.getProjects();    
@@ -23,6 +24,8 @@ class Frontend {
             $render_view: "projects",
             projects: projects
         };
+        */
+        return undefined;
     }
 }
 
