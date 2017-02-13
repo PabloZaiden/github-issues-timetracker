@@ -1,0 +1,10 @@
+version: "2"
+services: 
+    redis:
+        image: redis
+        command: redis-server /etc/redis/redis.conf
+        volumes: 
+            - ./redis/data:/data
+            - ./redis/redis.conf:/etc/redis/redis.conf
+        ports: 
+            - 6379:6379

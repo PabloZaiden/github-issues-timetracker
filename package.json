@@ -18,6 +18,8 @@
     "github": "^8.1.1",
     "hbs": "^4.0.1",
     "kwyjibo": "^1.0.24",
-    "lagash-dbaccess": "^1.0.2"
+    "lagash-async": "^0.1.1",
+    "lagash-dbaccess": "^1.0.2",
+    "redis": "^2.6.5"
   }
 }
