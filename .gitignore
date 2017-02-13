@@ -41,3 +41,5 @@ jspm_packages
 !public/**/*.js
 
 .DS_Store
+
+yarn.lock
