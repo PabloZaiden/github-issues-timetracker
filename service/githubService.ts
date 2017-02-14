@@ -1,4 +1,4 @@
-import { Organization, Project, Issue } from './githubService';
+import { Organization, Repo, Issue } from './githubService';
 import * as Github from "github";
 import * as K from "kwyjibo";
 
@@ -41,28 +41,28 @@ export default class GithubService {
         return orgs;
     }
 
-    async getProjects(orgName: string) {
+    async getRepos(orgName: string) {
 
-        let repos: any[] = await this.github.repos.getForOrg({
+        let reposRaw: any[] = await this.github.repos.getForOrg({
             org: orgName,
         });
 
-        let projects = repos.map(r => {
-            let project : Project = {
+        let repos = reposRaw.map(r => {
+            let repo: Repo = {
                 name: r.name,
                 id: r.id
             };
 
-            return project;
+            return repo;
         });
 
-        return projects;
+        return repos;
     }
 
-    async getIssues(projectName: string, orgName: string, filter?: Object) {
+    async getIssues(org: string, repo: string, filter?: Object) {
         let params = {
-            repo: projectName,
-            owner: orgName
+            repo: repo,
+            owner: org
         };
 
         let fullParams = {
@@ -73,7 +73,7 @@ export default class GithubService {
         let issuesRaw: any[] = await this.github.issues.getForRepo(fullParams);
 
         let issues = issuesRaw.map(r => {
-            let issue : Issue = {
+            let issue: Issue = {
                 name: r.title,
                 id: r.id,
                 state: r.state,
@@ -86,6 +86,22 @@ export default class GithubService {
 
         return issues;
     }
+
+    async getIssue(org: string, repo: string, number: number) {
+        let issueRaw = await this.github.issues.get({
+            owner: org,
+            repo: repo,
+            number: number
+        });
+
+        return {
+            name: issueRaw.title,
+            id: issueRaw.id,
+            state: issueRaw.state,
+            number: issueRaw.number,
+            url: issueRaw.html_url
+        } as Issue;
+    }
 }
 
 
@@ -94,14 +110,14 @@ export interface EntityBase {
     id: any
 }
 
-export interface Project extends EntityBase {
+export interface Repo extends EntityBase {
 }
 
 export interface Organization extends EntityBase {
 }
 
 export interface Issue extends EntityBase {
-    state: "open" | "close";
+    state: "open" | "closed";
     number: number;
     url: string;
 }

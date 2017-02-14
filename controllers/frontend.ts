@@ -1,12 +1,13 @@
-import {DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller} from "kwyjibo";
+import TimeTrackingService from './../service/timeTrackingService';
+import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller } from "kwyjibo";
 import * as K from "kwyjibo";
 import App from "../app";
-import Github from "../service/githubService";
+import GithubService from "../service/githubService";
+import API from "./api";
 
 
 @Controller("/frontend")
 @K.Middleware(App.authorize)
-@DocController("Sample frontend Controller.")
 class Frontend {
 
     @Get("/")
@@ -15,23 +16,80 @@ class Frontend {
     }
 
     @Get()
-    loggedIn(context: Context) {
-        return context.request.user;
+    navigate(context: Context): SuperRenderable {
+        return {
+            url: {
+                quickUrl: K.getActionRoute(Frontend, "quickUrl")
+            },
+            $render_view: "navigate"
+        };
     }
 
     @Get()
-    projects(context: Context): SuperRenderable {
-        /*
-        let gh = new Github();
+    async quickUrl(context: Context, @K.FromQuery("url") url: string) {
+        if (url == undefined) {
+            throw new Error("Missing url");
+        }
 
-        let projects = gh.getProjects();    
+        let githubUrlBase = ["https://github.com/", "https://www.github.com/", "https://api.github.com/repos/"];
+
+        let found = false;
+        for (let start of githubUrlBase) {
+            if (url.startsWith(start)) {
+                found = true;
+                url = url.substr(start.length);
+                break;
+            }
+        }
+
+        if (!found) {
+            throw new Error("Invalid url");
+        }
+
+        let parts = url.split("/", );
+
+        if (parts.length != 4) {
+            throw new Error("Invalid url");
+        }
+
+        let org = parts[0];
+        let repo = parts[1];
+        let number = parts[3];
+
+        let baseUrl = K.getActionRoute(Frontend, "issue");
+        context.response.redirect(baseUrl + `?org=${org}&repo=${repo}&number=${number}`);
+    }
+
+    @Get()
+    async issue(context: Context, @K.FromQuery("org") org: string, @K.FromQuery("repo") repo: string, @K.FromQuery("number") number: string): Promise<SuperRenderable> {
+        let gh = new GithubService(API.getToken(context));
+        let timeTrackingService = new TimeTrackingService();
+
+        let issue = await gh.getIssue(org, repo, parseInt(number));
+        let timeTracking = await timeTrackingService.getTimeTracking(issue.id);
+
+        let currentEstimate = 0;
+        if (timeTracking.estimates.length > 0) {
+            currentEstimate = timeTracking.estimates[0].amount;
+        }
+
+        let totalEffort = 0;
+        if (timeTracking.dedicatedEffort.length > 0) {
+            totalEffort = timeTracking.dedicatedEffort.map((e) => parseInt(e.amount.toString())).reduce((prev, curr) => prev + curr);
+        }
 
         return {
-            $render_view: "projects",
-            projects: projects
+            issue: issue,
+            timeTracking: timeTracking,
+            currentEstimate: currentEstimate,
+            totalEffort: totalEffort,
+            url: {
+                effort: K.getActionRoute(API, "effort").replace(":issueId", issue.id),
+                estimate: K.getActionRoute(API, "estimate").replace(":issueId", issue.id),
+                timeTracking: K.getActionRoute(API, "timeTracking").replace(":issueId", issue.id),
+            },
+            $render_view: "issue"
         };
-        */
-        return undefined;
     }
 }
 

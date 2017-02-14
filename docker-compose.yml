@@ -1,7 +1,7 @@
 version: "2"
 services: 
     redis:
-        image: redis
+        image: redis:alpine
         command: redis-server /etc/redis/redis.conf
         volumes: 
             - ./redis/data:/data

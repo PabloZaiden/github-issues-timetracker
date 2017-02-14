@@ -1,0 +1,36 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/css/styles.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+        <script type="text/javascript" src="/scripts/issue.js"></script>
+    </head>
+
+    <body>
+        <h1><a target="_blank" href="{{issue.url}}">{{issue.name}}</a></h1>
+        <ul>
+            <li>State: {{issue.state}}</li>
+            <li>Number: {{issue.number}}</li>
+            <li>{{issue.url}}</li>
+        </ul>
+
+        <p>
+            New estimate: <input type="text" id="estimate" /> <button onclick="newEstimate('{{url.estimate}}')">Add</button>
+        </p>
+        <h2>Estimates (current: {{currentEstimate}} hs)</h2>
+        <ul>
+            {{#each timeTracking.estimates}}
+                <li><strong>{{amount}}</strong> hs by <em>{{user}}</em> on {{date}}</li>
+            {{/each}}
+        </ul>
+
+        <p>
+            Add effort: <input type="text" id="effort" /> <button onclick="newEffort('{{url.effort}}')">Add</button>
+        </p>
+        <h2>Dedicated Effort (total: {{totalEffort}} hs)</h2>
+        <ul>
+            {{#each timeTracking.dedicatedEffort}}
+                <li><strong>{{amount}}</strong> hs by <em>{{user}}</em> on {{date}}</li>
+            {{/each}}
+        </ul>
+    </body>
+</html>
