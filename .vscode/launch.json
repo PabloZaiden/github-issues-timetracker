@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "Node",
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/app.js",
@@ -18,9 +18,27 @@
                 "NODE_ENV": "development"
             },
             "envFile": "${workspaceRoot}/.env",
-            "externalConsole": false,
+            "sourceMaps": true
+        },
+        {
+            "name": "Chrome",
+            "type": "chrome",
+            "request": "launch",
+            "port": 9222,
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceRoot}",
+            "diagnosticLogging": true,
             "sourceMaps": true,
-            "outDir": null
+            "userDataDir": "${workspaceRoot}/.vscode/chrome"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Hybrid",
+            "configurations": [
+                "Node",
+                "Chrome"
+            ]
         }
     ]
 }

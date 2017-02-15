@@ -24,7 +24,7 @@ export default class API {
     }
 
     @K.Get()
-    async organizations(context: Context, @K.FromQuery("user") user: string, @K.FromQuery("pass") pass: string) {
+    async organizations(context: Context) {
         let gh = new GithubService(API.getToken(context));
 
         let orgs = await gh.getOrganizations();

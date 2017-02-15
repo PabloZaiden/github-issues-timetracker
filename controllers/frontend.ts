@@ -12,7 +12,7 @@ class Frontend {
 
     @Get("/")
     index(context: Context): void {
-        context.response.redirect(K.getActionRoute(Frontend, "loggedIn"));
+        context.response.redirect(K.getActionRoute(Frontend, "navigate"));
     }
 
     @Get()

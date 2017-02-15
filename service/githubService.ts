@@ -8,6 +8,8 @@ export default class GithubService {
     private accessToken: string;
     private github: Github;
 
+    private static perPage = 100;
+
     constructor(accessToken: string) {
         this.accessToken = accessToken;
         this.github = new Github({
@@ -21,7 +23,23 @@ export default class GithubService {
             type: "oauth",
             token: accessToken
         });
+    }
 
+    private static getLastPage(arr: any[]): number {
+        let meta = arr["meta"];
+        let links: string = meta.link;
+
+        if (links == undefined) {
+            return 1;
+        }
+
+        let parts = links.split(",");
+        let lastUrl = parts.find(p => p.endsWith("rel=\"last\""));
+        let matches = /\?page=([0-9]+)&/.exec(lastUrl);
+
+        let lastPage = parseInt(matches[1]);
+
+        return lastPage;
     }
 
     async getOrganizations() {
@@ -42,10 +60,24 @@ export default class GithubService {
     }
 
     async getRepos(orgName: string) {
+        let reposRaw: any[] = [];
 
-        let reposRaw: any[] = await this.github.repos.getForOrg({
-            org: orgName,
-        });
+        let more = true;
+        let current = 1;
+
+        while (more) {
+            let reposPage: any[] = await this.github.repos.getForOrg({
+                org: orgName,
+                per_page: GithubService.perPage,
+                page: current
+            });
+
+            let lastPage = GithubService.getLastPage(reposPage);
+
+            reposRaw = reposRaw.concat(reposPage);
+            more = current == lastPage;
+            current++;
+        }
 
         let repos = reposRaw.map(r => {
             let repo: Repo = {
@@ -62,15 +94,29 @@ export default class GithubService {
     async getIssues(org: string, repo: string, filter?: Object) {
         let params = {
             repo: repo,
-            owner: org
+            owner: org,
+            per_page: GithubService.perPage
         };
 
-        let fullParams = {
-            ...filter,
-            ...params
-        };
+        let more = true;
+        let current = 1;
+        let issuesRaw: any[] = [];
 
-        let issuesRaw: any[] = await this.github.issues.getForRepo(fullParams);
+        while (more) {
+            let fullParams = {
+                ...filter,
+                ...params,
+                page: current
+            };
+
+            let issuesPage: any[] = await this.github.issues.getForRepo(fullParams);
+
+            let lastPage = GithubService.getLastPage(issuesPage);
+
+            issuesRaw = issuesRaw.concat(issuesPage);
+            more = current == lastPage;
+            current++;
+        }
 
         let issues = issuesRaw.map(r => {
             let issue: Issue = {
