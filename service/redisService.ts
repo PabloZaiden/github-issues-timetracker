@@ -76,9 +76,10 @@ export default class RedisService {
             if (this.client != undefined && this.client.connected) {
                 resolve(this.client);
             } else {
-                this.client = Redis.createClient(this.port, this.host);
+                let clientForConnection = this.client = Redis.createClient(this.port, this.host);
                 this.client.on("ready", () => {
-                    Async.promise<number, void>(this.client.select, this.client)(this.db).then(() => {
+                    Async.promise<number, void>(clientForConnection.select, clientForConnection)(this.db).then(() => {
+                        this.client = clientForConnection;
                         resolve(this.client);
                     }).catch((err) => {
                         this.client = undefined;
