@@ -150,6 +150,9 @@ export default class App {
     }
 }
 
+process.on('uncaughtException', (err: any) => {
+    console.error(err);
+});
 
 App.init();
 App.start();
