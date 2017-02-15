@@ -22,10 +22,10 @@ $(document).ready(() => {
 
     $.ajaxSetup({
         beforeSend: () => {
-            window.status = "Loading..."
+            $("#loader").fadeIn();
         },
         complete: () => {
-            window.status = "Done!";
+            $("#loader").fadeOut();
             checkLists();
         }
     });
@@ -75,7 +75,7 @@ function loadOrganizations(): void {
 function loadRepos(org: string): void {
     let list = repos.find("ul");
     list.empty();
-    
+
     $.get(
         `/api/repos?org=${org}`,
         undefined,
@@ -94,7 +94,7 @@ function loadRepos(org: string): void {
 function loadIssues(org: string, repo: string): void {
     let list = issues.find("ul");
     list.empty();
-    
+
     $.get(
         `/api/issues?org=${org}&repo=${repo}`,
         undefined,

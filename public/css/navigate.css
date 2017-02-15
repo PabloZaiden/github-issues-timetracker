@@ -1,0 +1,3 @@
+#organizations li, #repos li, #issues li {
+    cursor: pointer;
+}

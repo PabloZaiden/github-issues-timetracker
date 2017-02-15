@@ -17,10 +17,10 @@ $(document).ready(() => {
     checkLists();
     $.ajaxSetup({
         beforeSend: () => {
-            window.status = "Loading...";
+            $("#loader").fadeIn();
         },
         complete: () => {
-            window.status = "Done!";
+            $("#loader").fadeOut();
             checkLists();
         }
     });
@@ -50,8 +50,11 @@ function loadOrganizations() {
     let list = organizations.find("ul");
     list.empty();
     $.get("/api/organizations", undefined, (data) => {
+        document;
         for (let org of data) {
-            let li = $(`<li id="${org.id}">${org.name}</li>`);
+            let li = $(`<li />`);
+            li.attr("id", org.id);
+            li.text(org.name);
             list.append(li);
         }
     });
@@ -61,7 +64,10 @@ function loadRepos(org) {
     list.empty();
     $.get(`/api/repos?org=${org}`, undefined, (data) => {
         for (let repo of data) {
-            let li = $(`<li id="${repo.id}" org="${org}">${repo.name}</li>`);
+            let li = $(`<li />`);
+            li.attr("id", repo.id);
+            li.attr("org", org);
+            li.text(repo.name);
             list.append(li);
         }
     });
@@ -71,12 +77,15 @@ function loadIssues(org, repo) {
     list.empty();
     $.get(`/api/issues?org=${org}&repo=${repo}`, undefined, (data) => {
         for (let issue of data) {
-            let li = $(`
-                    <li id="${issue.id}" org="${org}" repo="${repo}" number="${issue.number}">
-                        <a href="/frontend/quickUrl?url=${issue.url}">
-                            ${issue.name}
-                        </a>
-                    </li>`);
+            let li = $(`<li />`);
+            li.attr("id", issue.id);
+            li.attr("org", org);
+            li.attr("repo", repo);
+            li.attr("number", issue.number);
+            let a = $("<a />");
+            a.attr("href", `/frontend/quickUrl?url=${encodeURI(issue.url)}`);
+            a.text(issue.name);
+            li.append(a);
             list.append(li);
         }
     });

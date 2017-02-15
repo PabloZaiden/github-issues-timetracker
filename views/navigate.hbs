@@ -1,33 +1,39 @@
 <html>
-    <head>
-        <link rel="stylesheet" type="text/css" href="/css/styles.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-        <script type="text/javascript" src="/scripts/navigate.js"></script>
-    </head>
 
-    <body>
-        <h1>Navigate</h1>
+<head>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/css/loader.css">
+    <link rel="stylesheet" type="text/css" href="/css/navigate.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script type="text/javascript" src="/scripts/navigate.js"></script>
+</head>
 
-        <h2>Go to Issue</h2>
-        <form method="GET" action="{{url.quickUrl}}">
-            Quick URL: <input type="text" name="url" /> <button type="submit">Go to issue</button>
-        </form>
+<body>
+    <div id="loader"></div>
 
-        <h2>Navigate</h2>
-        <div id="organizations">Your organizations
-            <ul>
-            </ul>
-        </div>
+    <h1>Navigate</h1>
 
-        <div id="repos">Your repos
-            <ul>
-            </ul>
-        </div>
+    <h2>Go to Issue</h2>
+    <form method="GET" action="{{url.quickUrl}}">
+        Quick URL: <input type="text" name="url" /> <button type="submit">Go to issue</button>
+    </form>
 
-        <div id="issues">Your issues
-            <ul>
-            </ul>
-        </div>
+    <h2>Navigate</h2>
+    <div id="organizations">Your organizations
+        <ul>
+        </ul>
+    </div>
 
-    </body>
+    <div id="repos">Your repos
+        <ul>
+        </ul>
+    </div>
+
+    <div id="issues">Your issues
+        <ul>
+        </ul>
+    </div>
+
+</body>
+
 </html>
