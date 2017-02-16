@@ -38,7 +38,7 @@ jspm_packages
 
 **/*.js
 **/*.map
-!public/scrips/js/**/*.js
+!public/scripts/js/**/*.js
 
 .DS_Store
 
