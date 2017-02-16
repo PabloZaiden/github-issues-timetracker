@@ -7,12 +7,12 @@ import GithubService from "../service/githubService";
 import API from "./api";
 
 
-@Controller("/frontend")
 @K.Middleware(App.authorize)
+@Controller("/frontend")
 class Frontend {
 
     @Get("/urls")
-    urls(context: Context, @K.FromQuery("type") type: string) {
+    urls(context: Context, @K.FromQuery("type") type?: string) {
         if (type === "script") {
             return `document["urls"] = ${JSON.stringify(K.getRoutes())}`;
         } else {
@@ -82,29 +82,10 @@ class Frontend {
         context.response.redirect(baseUrl + `?org=${org}&repo=${repo}&number=${number}`);
     }
 
-    private async getIssueTimeTrackingData(issueId: string) {
-        let timeTrackingService = new TimeTrackingService();
-        let timeTracking = await timeTrackingService.getTimeTracking(issueId);
-
-        let currentEstimate = 0;
-        if (timeTracking.estimates.length > 0) {
-            currentEstimate = timeTracking.estimates[0].amount;
-        }
-
-        let totalEffort = 0;
-        if (timeTracking.dedicatedEffort.length > 0) {
-            totalEffort = timeTracking.dedicatedEffort.map((e) => e.amount).reduce(Frontend.sum);
-        }
-
-        return {
-            timeTracking: timeTracking,
-            currentEstimate: currentEstimate,
-            totalEffort: totalEffort
-        } as IssueTimeTrackingData;
-    }
-
     @Get()
     async issue(context: Context, @K.FromQuery("org") org: string, @K.FromQuery("repo") repo: string, @K.FromQuery("number") number: string): Promise<K.Renderable> {
+        // VALIDATE: number
+
         let gh = new GithubService(API.getToken(context));
         let issue = await gh.getIssue(org, repo, parseInt(number));
 
@@ -120,6 +101,8 @@ class Frontend {
 
     @Get()
     async milestone(context: Context, @K.FromQuery("org") org: string, @K.FromQuery("repo") repo: string, @K.FromQuery("number") number: string): Promise<K.Renderable> {
+        // VALIDATE: number
+
         let gh = new GithubService(API.getToken(context));
 
         let milestone = await gh.getMilestone(org, repo, parseInt(number));
@@ -175,14 +158,31 @@ class Frontend {
     private static sum(n1: number, n2: number) {
         return n1 + n2;
     }
+
+    private async getIssueTimeTrackingData(issueId: string) {
+        let timeTrackingService = new TimeTrackingService();
+        let timeTracking = await timeTrackingService.getTimeTracking(issueId);
+
+        let currentEstimate = 0;
+        if (timeTracking.estimates.length > 0) {
+            currentEstimate = timeTracking.estimates[0].amount;
+        }
+
+        let totalEffort = 0;
+        if (timeTracking.dedicatedEffort.length > 0) {
+            totalEffort = timeTracking.dedicatedEffort.map((e) => e.amount).reduce(Frontend.sum);
+        }
+
+        return {
+            timeTracking: timeTracking,
+            currentEstimate: currentEstimate,
+            totalEffort: totalEffort
+        } as IssueTimeTrackingData;
+    }
 }
 
 interface IssueTimeTrackingData {
     timeTracking: TimeTracking,
     currentEstimate: number,
     totalEffort: number
-}
-
-interface Dictionary<T> {
-    [key: string]: T;
 }

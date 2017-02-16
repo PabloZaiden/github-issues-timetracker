@@ -10,7 +10,12 @@ import GithubService from "../service/githubService";
 export default class API {
 
     static getToken(context: Context): string {
-        let token = context.request.headers["accessToken"];
+        let authHeader = context.request.headers["Authorization"];
+        let token: string = undefined;
+        if (authHeader != undefined && authHeader.startsWith("bearer ")) {
+            token = authHeader.substring("bearer ".length);
+        }
+
         if (!token) {
             token = context.request.user.accessToken;
         }
@@ -59,6 +64,8 @@ export default class API {
         @K.FromQuery("repo") repo: string,
         @K.FromQuery("state") state?: string) {
 
+        // VALIDATE: query.state
+
         let gh = new GithubService(API.getToken(context));
 
         if (state == undefined) {
@@ -80,6 +87,8 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromBody() body: any) {
 
+        // VALIDATE: body.amount
+
         let timeTracking = new TimeTrackingService();
         let amount = parseInt(body.amount);
         if (!amount || isNaN(amount) || amount < 1) {
@@ -100,6 +109,9 @@ export default class API {
         context: Context,
         @K.FromPath("issueId") issueId: string,
         @K.FromBody() body: any) {
+
+
+        // VALIDATE: body.amount
 
         let timeTracking = new TimeTrackingService();
         let amount = parseInt(body.amount);
