@@ -31,6 +31,7 @@ export default class GithubSecurityProvider implements SecurityProvider {
             throw new Error("Missing GITHUB_ORGANIZATION");
         }
 
+
         Passport.use(new Github.Strategy({
             clientID: githubClientId,
             clientSecret: githubClientSecret,
@@ -40,17 +41,28 @@ export default class GithubSecurityProvider implements SecurityProvider {
             function (accessToken: string, refreshToken: string, profile: any, done: Function) {
                 let login = profile._json.login;
 
-                Request(`https://api.github.com/orgs/${githubOrganization}/members/${login}`, (err, res, body) => {
-                    if (err) {
-                        done(new Error("User is not a member of the required organization: " + githubOrganization));
-                    } else {
-                        done(null, {
-                            username: login,
-                            user_id: profile._json.id,
-                            accessToken: accessToken
-                        });
-                    }
-                });
+                Request(
+                    `https://api.github.com/orgs/${githubOrganization}/members/${login}`,
+                    {
+                        headers: {
+                            "user-agent": "github-ussues-timetracker-v0.1"
+                        },
+                        auth: {
+                            bearer: accessToken,
+                        },
+                        followAllRedirects: true
+                    },
+                    (err, res, body) => {
+                        if (err || res.statusCode < 200 || res.statusCode >= 300) {
+                            done(new Error("User is not a member of the required organization: " + githubOrganization));
+                        } else {
+                            done(null, {
+                                username: login,
+                                user_id: profile._json.id,
+                                accessToken: accessToken
+                            });
+                        }
+                    });
             }
         ));
 
