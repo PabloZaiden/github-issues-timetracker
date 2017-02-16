@@ -1,5 +1,5 @@
 import { Issue } from './../service/githubService';
-import TimeTrackingService from './../service/timeTrackingService';
+import { TimeTracking, TimeTrackingService } from "../service/timeTrackingService";
 import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller } from "kwyjibo";
 import * as K from "kwyjibo";
 import App from "../app";
@@ -11,49 +11,13 @@ import API from "./api";
 @K.Middleware(App.authorize)
 class Frontend {
 
-    private static routesToUrl(controllers: K.ControllerDocNode[], baseUrl?: string, replacements?: Dictionary<string>) {
-        if (baseUrl == undefined) {
-            baseUrl = "";
-        }
-
-        if (replacements == undefined) {
-            replacements = {};
-        }
-
-        let urls: any = {};
-        for (let controller of controllers) {
-            urls[controller.name] = {};
-            for (let method of controller.methods) {
-                urls[controller.name][method.name] = {};
-                for (let mountPoint of method.mountpoints) {
-                    let url = baseUrl + controller.path + mountPoint.path;
-
-                    for (let key in replacements) {
-                        url = url.replace(new RegExp(key, 'g'), replacements[key]);
-                    }
-
-                    urls[controller.name][method.name][mountPoint.httpMethod] = url;
-                }
-            }
-
-            let childUrls = Frontend.routesToUrl(controller.childs, controller.path);
-
-            urls = {
-                ...urls,
-                ...childUrls
-            };
-        }
-
-        return urls;
-    }
-
-    private static getUrls(replacements?: Dictionary<string>) {
-        return Frontend.routesToUrl(K.getDocs(), undefined, replacements);
-    }
-
     @Get("/urls")
-    urls(context?: Context) {
-        return Frontend.getUrls();
+    urls(context: Context, @K.FromQuery("type") type: string) {
+        if (type === "script") {
+            return `document["urls"] = ${JSON.stringify(K.getRoutes())}`;
+        } else {
+            return K.getRoutes();
+        }
     }
 
     @Get("/")
@@ -64,7 +28,7 @@ class Frontend {
     @Get()
     navigate(context: Context): K.Renderable {
         return {
-            urls: Frontend.getUrls(),
+            urls: K.getRoutes(),
             $render_view: "navigate"
         };
     }
@@ -100,17 +64,27 @@ class Frontend {
         let repo = parts[1];
         let number = parts[3];
 
-        let baseUrl = K.getActionRoute(Frontend, "issue");
+        let action = "";
+        switch (parts[2]) {
+            case "issues":
+                action = "issue";
+                break;
+
+            case "milestone":
+                action = "milestone";
+                break;
+
+            default:
+                throw new Error("Invalid url");
+        }
+
+        let baseUrl = K.getActionRoute(Frontend, action);
         context.response.redirect(baseUrl + `?org=${org}&repo=${repo}&number=${number}`);
     }
 
-    @Get()
-    async issue(context: Context, @K.FromQuery("org") org: string, @K.FromQuery("repo") repo: string, @K.FromQuery("number") number: string): Promise<K.Renderable> {
-        let gh = new GithubService(API.getToken(context));
+    private async getIssueTimeTrackingData(issueId: string) {
         let timeTrackingService = new TimeTrackingService();
-
-        let issue = await gh.getIssue(org, repo, parseInt(number));
-        let timeTracking = await timeTrackingService.getTimeTracking(issue.id);
+        let timeTracking = await timeTrackingService.getTimeTracking(issueId);
 
         let currentEstimate = 0;
         if (timeTracking.estimates.length > 0) {
@@ -119,18 +93,94 @@ class Frontend {
 
         let totalEffort = 0;
         if (timeTracking.dedicatedEffort.length > 0) {
-            totalEffort = timeTracking.dedicatedEffort.map((e) => parseInt(e.amount.toString())).reduce((prev, curr) => prev + curr);
+            totalEffort = timeTracking.dedicatedEffort.map((e) => e.amount).reduce(Frontend.sum);
         }
 
         return {
-            issue: issue,
             timeTracking: timeTracking,
             currentEstimate: currentEstimate,
-            totalEffort: totalEffort,
-            urls: Frontend.getUrls({ ":issueId": issue.id }),
+            totalEffort: totalEffort
+        } as IssueTimeTrackingData;
+    }
+
+    @Get()
+    async issue(context: Context, @K.FromQuery("org") org: string, @K.FromQuery("repo") repo: string, @K.FromQuery("number") number: string): Promise<K.Renderable> {
+        let gh = new GithubService(API.getToken(context));
+        let issue = await gh.getIssue(org, repo, parseInt(number));
+
+        let issueData = await this.getIssueTimeTrackingData(issue.id);;
+
+        return {
+            ...issueData,
+            issue: issue,
+            urls: K.getRoutes({ ":issueId": issue.id }),
             $render_view: "issue"
         };
     }
+
+    @Get()
+    async milestone(context: Context, @K.FromQuery("org") org: string, @K.FromQuery("repo") repo: string, @K.FromQuery("number") number: string): Promise<K.Renderable> {
+        let gh = new GithubService(API.getToken(context));
+
+        let milestone = await gh.getMilestone(org, repo, parseInt(number));
+
+        let issues = await gh.getIssuesByMilestone(org, repo, milestone.number, { state: "all" });
+
+        for (let issue of issues) {
+            issue["timeTrackingData"] = await this.getIssueTimeTrackingData(issue.id);
+        }
+
+        let currentEstimate = 0;
+        let totalEffort = 0;
+
+        if (issues.length > 0) {
+            let estimates = issues.map(i => {
+                let issueTimeTrackingData = i["timeTrackingData"] as IssueTimeTrackingData;
+                if (issueTimeTrackingData.timeTracking.estimates.length > 0) {
+                    return issueTimeTrackingData.timeTracking.estimates[0].amount;
+                } else {
+                    return 0;
+                }
+            });
+
+            let efforts = issues.map(i => {
+                let issueTimeTrackingData = i["timeTrackingData"] as IssueTimeTrackingData;
+                if (issueTimeTrackingData.timeTracking.dedicatedEffort.length > 0) {
+                    return issueTimeTrackingData.timeTracking.dedicatedEffort.map(d => { return d.amount }).reduce(Frontend.sum);
+                } else {
+                    return 0;
+                }
+            });
+
+            if (efforts.length > 0) {
+                totalEffort = efforts.reduce(Frontend.sum);
+            }
+
+            if (estimates.length > 0) {
+                currentEstimate = estimates.reduce(Frontend.sum);
+            }
+        }
+
+
+        return {
+            milestone: milestone,
+            issues: issues,
+            currentEstimate: currentEstimate,
+            totalEffort: totalEffort,
+            urls: K.getRoutes({ ":milestoneId": milestone.id }),
+            $render_view: "milestone"
+        };
+    }
+
+    private static sum(n1: number, n2: number) {
+        return n1 + n2;
+    }
+}
+
+interface IssueTimeTrackingData {
+    timeTracking: TimeTracking,
+    currentEstimate: number,
+    totalEffort: number
 }
 
 interface Dictionary<T> {

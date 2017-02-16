@@ -6,6 +6,8 @@
     <link rel="stylesheet" type="text/css" href="/css/navigate.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
     <script type="text/javascript" src="/scripts/navigate.js"></script>
+    <script type="text/javascript" src="{{urls.Frontend.urls.get}}?type=script"></script>
+
 </head>
 
 <body>
@@ -13,9 +15,9 @@
 
     <h1>Navigate</h1>
 
-    <h2>Go to Issue</h2>
+    <h2>Go to Issue or Milestone</h2>
     <form method="GET" action="{{urls.Frontend.quickUrl.get}}">
-        Quick URL: <input type="text" name="url" /> <button type="submit">Go to issue</button>
+        Quick URL: <input type="text" name="url" /> <button type="submit">Go!</button>
     </form>
 
     <h2>Navigate</h2>

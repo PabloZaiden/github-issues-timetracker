@@ -1,5 +1,6 @@
 import RedisService from "./redisService";
-export default class TimeTrackingService {
+
+export class TimeTrackingService {
     constructor() {
 
     }

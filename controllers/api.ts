@@ -1,4 +1,4 @@
-import TimeTrackingService from "../service/timeTrackingService";
+import { TimeTrackingService } from "../service/timeTrackingService";
 import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller } from "kwyjibo";
 import * as K from "kwyjibo";
 import App from "../app";
@@ -16,11 +16,6 @@ export default class API {
         }
 
         return token;
-    }
-
-    @K.Get()
-    user(context: Context) {
-        return context.request.user;
     }
 
     @K.Get()
@@ -61,11 +56,20 @@ export default class API {
     async milestones(
         context: Context,
         @K.FromQuery("org") org: string,
-        @K.FromQuery("repo") repo: string) {
+        @K.FromQuery("repo") repo: string,
+        @K.FromQuery("state") state?: string) {
 
         let gh = new GithubService(API.getToken(context));
 
-        let milestones = await gh.getMilestones(org, repo);
+        if (state == undefined) {
+            state = "all";
+        }
+
+        if (state !== "all" && state !== "open" && state !== "closed") {
+            throw new Error("Invalid state");
+        }
+
+        let milestones = await gh.getMilestones(org, repo, state);
 
         return milestones;
     }
@@ -82,7 +86,11 @@ export default class API {
             throw new Error("Amount must be a positive integer");
         }
 
-        await timeTracking.addDedicatedEffort(issueId, amount, context.request.user.username);
+        let gh = new GithubService(API.getToken(context));
+
+        let user = await gh.getCurrentUser();
+
+        await timeTracking.addDedicatedEffort(issueId, amount, user.login);
 
         context.response.sendStatus(200);
     }
@@ -99,7 +107,11 @@ export default class API {
             throw new Error("Amount must be a positive integer");
         }
 
-        await timeTracking.addEstimate(issueId, amount, context.request.user.username);
+        let gh = new GithubService(API.getToken(context));
+
+        let user = await gh.getCurrentUser();
+
+        await timeTracking.addEstimate(issueId, amount, user.login);
 
         context.response.sendStatus(200);
     }
@@ -107,12 +119,19 @@ export default class API {
     @K.Get("/:issueId/timeTracking")
     async timeTracking(
         context: Context,
-        @K.FromQuery("user") user: string,
-        @K.FromQuery("pass") pass: string,
         @K.FromPath("issueId") issueId: string) {
 
         let timeTracking = new TimeTrackingService();
 
         return timeTracking.getTimeTracking(issueId);
+    }
+
+    @K.Get()
+    async user(context: Context) {
+        let gh = new GithubService(API.getToken(context));
+
+        let user = await gh.getCurrentUser();
+
+        return user;
     }
 }

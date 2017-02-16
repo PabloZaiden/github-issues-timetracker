@@ -1,11 +1,5 @@
 
 $(document).ready(() => {
-    $.get(
-        "/Frontend/urls",
-        (data) => {
-            document["urls"] = data;
-            $("button").prop("disabled", false);
-        });
 });
 
 function newEstimate(issueId: string) {

@@ -1,6 +1,7 @@
 import { Organization, Repo, Issue } from './githubService';
 import * as Github from "github";
 import * as K from "kwyjibo";
+import * as Request from "request";
 
 
 export default class GithubService {
@@ -8,6 +9,7 @@ export default class GithubService {
     private accessToken: string;
     private github: Github;
 
+    private static userAgent = "github-ussues-timetracker-v0.1";
     private static perPage = 100;
 
     constructor(accessToken: string) {
@@ -15,7 +17,7 @@ export default class GithubService {
         this.github = new Github({
             protocol: "https",
             headers: {
-                "user-agent": "github-ussues-timetracker-v0.1"
+                "user-agent": GithubService.userAgent
             }
         });
 
@@ -42,7 +44,7 @@ export default class GithubService {
             let lastPage = GithubService.getLastPage(page);
 
             raw.push(...page);
-            more = current == lastPage;
+            more = current !== lastPage;
             current++;
         }
 
@@ -66,6 +68,35 @@ export default class GithubService {
         let lastPage = parseInt(matches[1]);
 
         return lastPage;
+    }
+
+    async getCurrentUser() {
+        // TODO: replace this with the following lines when they start to work
+        //let user = await this.github.users.get();
+        //return user;
+
+        return new Promise<User>((resolve, reject) => {
+            Request(
+                "https://api.github.com/user",
+                {
+                    headers: {
+                        "user-agent": GithubService.userAgent
+                    },
+                    auth: {
+                        bearer: this.accessToken,
+                    }
+                },
+                (error, response, body) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        if (response.statusCode < 200 || response.statusCode >= 300) {
+                            throw new Error("Invalid status: " + response.statusCode);
+                        }
+                        resolve(JSON.parse(body) as User);
+                    }
+                });
+        });
     }
 
     async getOrganizations() {
@@ -92,7 +123,7 @@ export default class GithubService {
 
         let mapper = (r: any) => {
             return {
-                name: r.title,
+                name: r.name,
                 id: r.id,
             } as Repo;
         };
@@ -105,7 +136,8 @@ export default class GithubService {
     async getIssues(org: string, repo: string, filter?: Object) {
         let params = {
             repo: repo,
-            owner: org
+            owner: org,
+            ...filter
         };
 
         let mapper = (r: any) => {
@@ -121,6 +153,10 @@ export default class GithubService {
         let issues = await GithubService.getPagedCollection(params, this.github.issues.getForRepo, mapper);
 
         return issues;
+    }
+
+    async getIssuesByMilestone(org: string, repo: string, milestone: number, filter?: Object) {
+        return this.getIssues(org, repo, {milestone: milestone, ...filter});
     }
 
     async getIssue(org: string, repo: string, number: number) {
@@ -150,12 +186,31 @@ export default class GithubService {
             return {
                 name: r.title,
                 id: r.id,
+                state: r.state,
+                number: r.number,
+                url: r.html_url
             } as Milestone;
         };
 
         let milestones = await GithubService.getPagedCollection(params, this.github.issues.getMilestones, mapper);
 
         return milestones;
+    }
+
+    async getMilestone(org: string, repo: string, number: number) {
+        let milestoneRaw = await this.github.issues.getMilestone({
+            owner: org,
+            repo: repo,
+            number: number
+        });
+
+        return {
+            name: milestoneRaw.title,
+            id: milestoneRaw.id,
+            state: milestoneRaw.state,
+            number: milestoneRaw.number,
+            url: milestoneRaw.html_url
+        } as Milestone;
     }
 }
 
@@ -172,10 +227,19 @@ export interface Organization extends EntityBase {
 }
 
 export interface Milestone extends EntityBase {
+    state: "open" | "closed";
+    number: number;
+    url: string;
 }
 
 export interface Issue extends EntityBase {
     state: "open" | "closed";
     number: number;
     url: string;
+}
+
+export interface User extends EntityBase {
+    login: string,
+    email: string,
+    avatar_url: string
 }
