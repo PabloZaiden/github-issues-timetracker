@@ -26,6 +26,7 @@
     "kwyjibo": "^1.0.29",
     "lagash-async": "^0.1.1",
     "lagash-dbaccess": "^1.0.2",
+    "lagash-logger": "^0.1.0",
     "passport": "^0.3.2",
     "passport-github": "^1.1.0",
     "redis": "^2.6.5",

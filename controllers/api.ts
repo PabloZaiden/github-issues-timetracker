@@ -1,3 +1,4 @@
+import LagashLogger from "lagash-logger" ;
 import { TimeTrackingService } from "../service/timeTrackingService";
 import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller } from "kwyjibo";
 import * as K from "kwyjibo";
@@ -8,6 +9,12 @@ import GithubService from "../service/githubService";
 @Controller("/api")
 @DocController("API Controller")
 export default class API {
+
+    private static logger: LagashLogger;
+    
+    constructor() {
+        API.logger = new LagashLogger("API");        
+    }
 
     static getToken(context: Context): string {
         let authHeader = context.request.headers["Authorization"];

@@ -7,7 +7,7 @@ import * as K from "kwyjibo";
 import Session = require("cookie-session");
 import * as Passport from "passport";
 import GithubSecurityProvider from "./middleware/githubSecurityProvider";
-
+import * as LagashLogger from "lagash-logger";
 
 export default class App {
 
@@ -38,18 +38,6 @@ export default class App {
 
         App.express.set("view engine", "hbs");
         let hbs = require("hbs");
-
-        hbs.registerHelper("debug", function(optionalValue: any) {
-        console.log("Current Context");
-        console.log("====================");
-        console.log(this);
-        
-        if (optionalValue) {
-            console.log("Value");
-            console.log("====================");
-            console.log(optionalValue);
-        }
-        });
 
         hbs.registerPartials(__dirname + "/views/partials");
 
