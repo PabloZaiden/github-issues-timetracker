@@ -62,7 +62,7 @@ class Frontend {
     }
 
     @Get()
-    navigate(context: Context): SuperRenderable {
+    navigate(context: Context): K.Renderable {
         return {
             urls: Frontend.getUrls(),
             $render_view: "navigate"
@@ -105,7 +105,7 @@ class Frontend {
     }
 
     @Get()
-    async issue(context: Context, @K.FromQuery("org") org: string, @K.FromQuery("repo") repo: string, @K.FromQuery("number") number: string): Promise<SuperRenderable> {
+    async issue(context: Context, @K.FromQuery("org") org: string, @K.FromQuery("repo") repo: string, @K.FromQuery("number") number: string): Promise<K.Renderable> {
         let gh = new GithubService(API.getToken(context));
         let timeTrackingService = new TimeTrackingService();
 
@@ -131,10 +131,6 @@ class Frontend {
             $render_view: "issue"
         };
     }
-}
-
-export interface SuperRenderable extends K.Renderable {
-    [key: string]: any;
 }
 
 interface Dictionary<T> {
