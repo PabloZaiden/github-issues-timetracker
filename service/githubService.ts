@@ -25,6 +25,32 @@ export default class GithubService {
         });
     }
 
+    private static async getPagedCollection<T, U>(params: any, callback: (params: any) => Promise<any>, mapper: (p: T) => U) {
+        let more = true;
+        let current = 1;
+        let raw: any[] = [];
+
+        while (more) {
+            let fullParams = {
+                ...params,
+                page: current,
+                per_page: GithubService.perPage
+            };
+
+            let page: any[] = await callback(fullParams);
+
+            let lastPage = GithubService.getLastPage(page);
+
+            raw.push(...page);
+            more = current == lastPage;
+            current++;
+        }
+
+        let actual = raw.map(mapper);
+
+        return actual;
+    }
+
     private static getLastPage(arr: any[]): number {
         let meta = arr["meta"];
         let links: string = meta.link;
@@ -60,33 +86,18 @@ export default class GithubService {
     }
 
     async getRepos(orgName: string) {
-        let reposRaw: any[] = [];
+        let params = {
+            org: orgName
+        };
 
-        let more = true;
-        let current = 1;
+        let mapper = (r: any) => {
+            return {
+                name: r.title,
+                id: r.id,
+            } as Repo;
+        };
 
-        while (more) {
-            let reposPage: any[] = await this.github.repos.getForOrg({
-                org: orgName,
-                per_page: GithubService.perPage,
-                page: current
-            });
-
-            let lastPage = GithubService.getLastPage(reposPage);
-
-            reposRaw = reposRaw.concat(reposPage);
-            more = current == lastPage;
-            current++;
-        }
-
-        let repos = reposRaw.map(r => {
-            let repo: Repo = {
-                name: r.name,
-                id: r.id
-            };
-
-            return repo;
-        });
+        let repos = await GithubService.getPagedCollection(params, this.github.repos.getForOrg, mapper);
 
         return repos;
     }
@@ -94,41 +105,20 @@ export default class GithubService {
     async getIssues(org: string, repo: string, filter?: Object) {
         let params = {
             repo: repo,
-            owner: org,
-            per_page: GithubService.perPage
+            owner: org
         };
 
-        let more = true;
-        let current = 1;
-        let issuesRaw: any[] = [];
-
-        while (more) {
-            let fullParams = {
-                ...filter,
-                ...params,
-                page: current
-            };
-
-            let issuesPage: any[] = await this.github.issues.getForRepo(fullParams);
-
-            let lastPage = GithubService.getLastPage(issuesPage);
-
-            issuesRaw = issuesRaw.concat(issuesPage);
-            more = current == lastPage;
-            current++;
-        }
-
-        let issues = issuesRaw.map(r => {
-            let issue: Issue = {
+        let mapper = (r: any) => {
+            return {
                 name: r.title,
                 id: r.id,
                 state: r.state,
                 number: r.number,
                 url: r.url
-            };
+            } as Issue;
+        };
 
-            return issue;
-        });
+        let issues = await GithubService.getPagedCollection(params, this.github.issues.getForRepo, mapper);
 
         return issues;
     }
@@ -148,6 +138,25 @@ export default class GithubService {
             url: issueRaw.html_url
         } as Issue;
     }
+
+    async getMilestones(org: string, repo: string, state?: "open" | "closed" | "all") {
+        let params = {
+            state: state,
+            repo: repo,
+            owner: org
+        };
+
+        let mapper = (r: any) => {
+            return {
+                name: r.title,
+                id: r.id,
+            } as Milestone;
+        };
+
+        let milestones = await GithubService.getPagedCollection(params, this.github.issues.getMilestones, mapper);
+
+        return milestones;
+    }
 }
 
 
@@ -160,6 +169,9 @@ export interface Repo extends EntityBase {
 }
 
 export interface Organization extends EntityBase {
+}
+
+export interface Milestone extends EntityBase {
 }
 
 export interface Issue extends EntityBase {

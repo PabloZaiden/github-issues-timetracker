@@ -57,6 +57,19 @@ export default class API {
         return issues;
     }
 
+    @K.Get()
+    async milestones(
+        context: Context,
+        @K.FromQuery("org") org: string,
+        @K.FromQuery("repo") repo: string) {
+
+        let gh = new GithubService(API.getToken(context));
+
+        let milestones = await gh.getMilestones(org, repo);
+
+        return milestones;
+    }
+
     @K.Post("/:issueId/effort")
     async effort(
         context: Context,
