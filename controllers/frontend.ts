@@ -1,3 +1,4 @@
+import { Issue } from './../service/githubService';
 import TimeTrackingService from './../service/timeTrackingService';
 import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller } from "kwyjibo";
 import * as K from "kwyjibo";
@@ -10,6 +11,51 @@ import API from "./api";
 @K.Middleware(App.authorize)
 class Frontend {
 
+    private static routesToUrl(controllers: K.ControllerDocNode[], baseUrl?: string, replacements?: Dictionary<string>) {
+        if (baseUrl == undefined) {
+            baseUrl = "";
+        }
+
+        if (replacements == undefined) {
+            replacements = {};
+        }
+
+        let urls: any = {};
+        for (let controller of controllers) {
+            urls[controller.name] = {};
+            for (let method of controller.methods) {
+                urls[controller.name][method.name] = {};
+                for (let mountPoint of method.mountpoints) {
+                    let url = baseUrl + controller.path + mountPoint.path;
+
+                    for (let key in replacements) {
+                        url = url.replace(new RegExp(key, 'g'), replacements[key]);
+                    }
+
+                    urls[controller.name][method.name][mountPoint.httpMethod] = url;
+                }
+            }
+
+            let childUrls = Frontend.routesToUrl(controller.childs, controller.path);
+
+            urls = {
+                ...urls,
+                ...childUrls
+            };
+        }
+
+        return urls;
+    }
+
+    private static getUrls(replacements?: Dictionary<string>) {
+        return Frontend.routesToUrl(K.getDocs(), undefined, replacements);
+    }
+
+    @Get("/urls")
+    urls(context?: Context) {
+        return Frontend.getUrls();
+    }
+
     @Get("/")
     index(context: Context): void {
         context.response.redirect(K.getActionRoute(Frontend, "navigate"));
@@ -18,9 +64,7 @@ class Frontend {
     @Get()
     navigate(context: Context): SuperRenderable {
         return {
-            url: {
-                quickUrl: K.getActionRoute(Frontend, "quickUrl")
-            },
+            urls: Frontend.getUrls(),
             $render_view: "navigate"
         };
     }
@@ -83,11 +127,7 @@ class Frontend {
             timeTracking: timeTracking,
             currentEstimate: currentEstimate,
             totalEffort: totalEffort,
-            url: {
-                effort: K.getActionRoute(API, "effort").replace(":issueId", issue.id),
-                estimate: K.getActionRoute(API, "estimate").replace(":issueId", issue.id),
-                timeTracking: K.getActionRoute(API, "timeTracking").replace(":issueId", issue.id),
-            },
+            urls: Frontend.getUrls({ ":issueId": issue.id }),
             $render_view: "issue"
         };
     }
@@ -95,4 +135,8 @@ class Frontend {
 
 export interface SuperRenderable extends K.Renderable {
     [key: string]: any;
+}
+
+interface Dictionary<T> {
+    [key: string]: T;
 }

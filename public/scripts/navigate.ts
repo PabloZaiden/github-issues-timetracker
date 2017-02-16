@@ -3,34 +3,42 @@ let repos: JQuery;
 let issues: JQuery;
 
 $(document).ready(() => {
-    organizations = $("#organizations");
-    repos = $("#repos");
-    issues = $("#issues");
+    $.get(
+        "/Frontend/urls",
+        (data) => {
+            document["urls"] = data;
 
-    organizations.bind("li").click((elem) => {
-        let org = $(elem.target).text();
-        loadRepos(org);
-    });
+            organizations = $("#organizations");
+            repos = $("#repos");
+            issues = $("#issues");
 
-    repos.bind("li").click((elem) => {
-        let repo = $(elem.target).text();
-        let org = $(elem.target).attr("org");
-        loadIssues(org, repo);
-    });
+            organizations.bind("li").click((elem) => {
+                let org = $(elem.target).text();
+                loadRepos(org);
+            });
 
-    checkLists();
+            repos.bind("li").click((elem) => {
+                let repo = $(elem.target).text();
+                let org = $(elem.target).attr("org");
+                loadIssues(org, repo);
+            });
 
-    $.ajaxSetup({
-        beforeSend: () => {
-            $("#loader").fadeIn();
-        },
-        complete: () => {
-            $("#loader").fadeOut();
             checkLists();
-        }
-    });
 
-    loadOrganizations();
+            $.ajaxSetup({
+                beforeSend: () => {
+                    $("#loader").fadeIn();
+                },
+                complete: () => {
+                    $("#loader").fadeOut();
+                    checkLists();
+                }
+            });
+
+            loadOrganizations();
+        });
+
+
 });
 
 function checkLists(): void {
@@ -58,7 +66,7 @@ function loadOrganizations(): void {
     list.empty();
 
     $.get(
-        "/api/organizations",
+        document["urls"].API.organizations.get,
         undefined,
         (data) => {
             document
@@ -77,7 +85,7 @@ function loadRepos(org: string): void {
     list.empty();
 
     $.get(
-        `/api/repos?org=${org}`,
+        document["urls"].API.repos.get + `?org=${org}`,
         undefined,
         (data) => {
             for (let repo of data) {
@@ -96,7 +104,7 @@ function loadIssues(org: string, repo: string): void {
     list.empty();
 
     $.get(
-        `/api/issues?org=${org}&repo=${repo}`,
+        document["urls"].API.issues.get + `?org=${org}&repo=${repo}`,
         undefined,
         (data) => {
             for (let issue of data) {
@@ -108,7 +116,7 @@ function loadIssues(org: string, repo: string): void {
                 li.attr("number", issue.number);
 
                 let a = $("<a />");
-                a.attr("href", `/frontend/quickUrl?url=${encodeURI(issue.url)}`);
+                a.attr("href", document["urls"].Frontend.quickUrl.get + `?url=${encodeURI(issue.url)}`);
                 a.text(issue.name);
 
                 li.append(a);

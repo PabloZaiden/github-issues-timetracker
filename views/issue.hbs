@@ -4,7 +4,6 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
         <script type="text/javascript" src="/scripts/issue.js"></script>
     </head>
-
     <body>
         <h1><a target="_blank" href="{{issue.url}}">{{issue.name}}</a></h1>
         <ul>
@@ -14,7 +13,7 @@
         </ul>
 
         <p>
-            New estimate: <input type="text" id="estimate" /> <button onclick="newEstimate('{{url.estimate}}')">Add</button>
+            New estimate: <input type="text" id="estimate" /> <button disabled onclick="newEstimate('{{issue.id}}')">Add</button>
         </p>
         <h2>Estimates (current: {{currentEstimate}} hs)</h2>
         <ul>
@@ -24,7 +23,7 @@
         </ul>
 
         <p>
-            Add effort: <input type="text" id="effort" /> <button onclick="newEffort('{{url.effort}}')">Add</button>
+            Add effort: <input type="text" id="effort" /> <button disabled onclick="newEffort('{{issue.id}}')">Add</button>
         </p>
         <h2>Dedicated Effort (total: {{totalEffort}} hs)</h2>
         <ul>

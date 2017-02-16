@@ -1,8 +1,14 @@
-function newEstimate(url) {
-    sendAmount(url, parseInt($("#estimate").val()));
+$(document).ready(() => {
+    $.get("/Frontend/urls", (data) => {
+        document["urls"] = data;
+        $("button").prop("disabled", false);
+    });
+});
+function newEstimate(issueId) {
+    sendAmount(document["urls"].API.estimate.post.replace(":issueId", issueId), parseInt($("#estimate").val()));
 }
-function newEffort(url) {
-    sendAmount(url, parseInt($("#effort").val()));
+function newEffort(issueId) {
+    sendAmount(document["urls"].API.effort.post.replace(":issueId", issueId), parseInt($("#effort").val()));
 }
 function sendAmount(url, amount) {
     $("button").prop("disabled", true);
@@ -11,7 +17,7 @@ function sendAmount(url, amount) {
         method: "POST",
         data: { amount: amount },
         success: (data) => {
-            window.location.href = window.location.href;
+            location.reload(true);
         },
         error: (err) => {
             alert(err.status);
