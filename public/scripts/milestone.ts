@@ -1,3 +1,13 @@
+class Milestone {
+    private static instance: Milestone;
+    static init() {
+        Milestone.instance = new Milestone();
+    }
 
-$(document).ready(() => {
-});
+    constructor() {
+        $(document).ready(() => {
+        });
+    }
+}
+
+Milestone.init();
