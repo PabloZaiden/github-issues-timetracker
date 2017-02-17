@@ -1,4 +1,4 @@
-import { SecurityProvider } from './middleware/securityProvider';
+import { SecurityProvider, GithubSecurityProvider } from 'github-securityprovider-connect';
 import * as Express from "express";
 import * as CookieParser from "cookie-parser";
 import * as BodyParser from "body-parser";
@@ -6,7 +6,6 @@ import * as Http from "http";
 import * as K from "kwyjibo";
 import Session = require("cookie-session");
 import * as Passport from "passport";
-import GithubSecurityProvider from "./middleware/githubSecurityProvider";
 import * as LagashLogger from "lagash-logger";
 
 export default class App {
