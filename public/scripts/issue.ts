@@ -1,20 +1,35 @@
 class Issue {
     private static instance: Issue;
+
+    private issueId: string;
+
     static init() {
         Issue.instance = new Issue();
     }
 
     constructor() {
         $(document).ready(() => {
+            let issueId = $("#issueId").val();
+            this.issueId = issueId;
+            
+            $("#newEstimate").click(() => {
+                this.newEstimate();
+            });
+
+            $("#newEffort").click(() => {
+                this.newEffort();
+            });
         });
     }
 
-    private newEstimate(issueId: string) {
-        this.sendAmount(document["urls"].API.estimate.post.replace(":issueId", issueId), parseInt($("#estimate").val()));
+    private newEstimate() {
+        let url = document["urls"].API.estimate.post.replace(":issueId", this.issueId);
+        this.sendAmount(url, parseInt($("#estimate").val()));
     }
 
-    private newEffort(issueId: string) {
-        this.sendAmount(document["urls"].API.effort.post.replace(":issueId", issueId), parseInt($("#effort").val()));
+    private newEffort() {
+        let url = document["urls"].API.effort.post.replace(":issueId", this.issueId);
+        this.sendAmount(url, parseInt($("#effort").val()));
     }
 
     private sendAmount(url: string, amount: number) {
@@ -27,8 +42,8 @@ class Issue {
             success: (data) => {
                 location.reload(true);
             },
-            error: (err) => {
-                alert(err.status);
+            error: (err: any) => {
+                alert(err.responseJSON.message);
                 $("button").prop("disabled", false);
             }
         };

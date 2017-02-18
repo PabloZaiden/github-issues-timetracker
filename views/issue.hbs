@@ -8,6 +8,7 @@
 </head>
 
 <body>
+    <input type="hidden" id="issueId" value="{{issue.id}}" />
     <h1><a target="_blank" href="{{issue.url}}">{{issue.name}}</a></h1>
     <ul>
         <li>State: {{issue.state}}</li>
@@ -16,7 +17,7 @@
     </ul>
 
     <p>
-        New estimate: <input type="text" id="estimate" /> <button onclick="newEstimate('{{issue.id}}')">Add</button>
+        New estimate: <input type="text" id="estimate" /> <button id="newEstimate">Add</button>
     </p>
     <h2>Estimates (current: {{currentEstimate}} hs)</h2>
     <ul>
@@ -26,7 +27,7 @@
     </ul>
 
     <p>
-        Add effort: <input type="text" id="effort" /> <button onclick="newEffort('{{issue.id}}')">Add</button>
+        Add effort: <input type="text" id="effort" /> <button id="newEffort">Add</button>
     </p>
     <h2>Dedicated Effort (total: {{totalEffort}} hs)</h2>
     <ul>

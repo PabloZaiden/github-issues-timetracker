@@ -88,7 +88,7 @@ export default class API {
         return milestones;
     }
 
-    @K.Post("/:issueId/effort")
+    @K.Post("issue/:issueId/effort")
     async effort(
         context: Context,
         @K.FromPath("issueId") issueId: string,
@@ -106,12 +106,14 @@ export default class API {
 
         let user = await gh.getCurrentUser();
 
+        
+
         await timeTracking.addDedicatedEffort(issueId, amount, user.login);
 
         context.response.sendStatus(200);
     }
 
-    @K.Post("/:issueId/estimate")
+    @K.Post("/issue/:issueId/estimate")
     async estimate(
         context: Context,
         @K.FromPath("issueId") issueId: string,
@@ -135,7 +137,7 @@ export default class API {
         context.response.sendStatus(200);
     }
 
-    @K.Get("/:issueId/timeTracking")
+    @K.Get("/issue/:issueId/timeTracking")
     async timeTracking(
         context: Context,
         @K.FromPath("issueId") issueId: string) {
