@@ -1,4 +1,3 @@
-import { Organization, Repo, Issue } from './githubService';
 import * as Github from "github";
 import * as K from "kwyjibo";
 import * as Request from "request";
@@ -93,7 +92,7 @@ export default class GithubService {
                         if (response.statusCode < 200 || response.statusCode >= 300) {
                             throw new Error("Invalid status: " + response.statusCode);
                         }
-                        resolve(JSON.parse(body) as User);
+                        resolve(new User(JSON.parse(body)));
                     }
                 });
         });
@@ -105,12 +104,7 @@ export default class GithubService {
         });
 
         let orgs = memberships.map(m => {
-            let org: Organization = {
-                id: m.organization.id,
-                name: m.organization.login
-            };
-
-            return org;
+            return new Organization(m.organization);
         });
 
         return orgs;
@@ -122,10 +116,7 @@ export default class GithubService {
         };
 
         let mapper = (r: any) => {
-            return {
-                name: r.name,
-                id: r.id,
-            } as Repo;
+            return new Repo(r);
         };
 
         let repos = await GithubService.getPagedCollection(params, this.github.repos.getForOrg, mapper);
@@ -141,13 +132,7 @@ export default class GithubService {
         };
 
         let mapper = (r: any) => {
-            return {
-                name: r.title,
-                id: r.id,
-                state: r.state,
-                number: r.number,
-                url: r.url
-            } as Issue;
+            return new Issue(r);
         };
 
         let issues = await GithubService.getPagedCollection(params, this.github.issues.getForRepo, mapper);
@@ -156,7 +141,7 @@ export default class GithubService {
     }
 
     async getIssuesByMilestone(org: string, repo: string, milestone: number, filter?: Object) {
-        return this.getIssues(org, repo, {milestone: milestone, ...filter});
+        return this.getIssues(org, repo, { milestone: milestone, ...filter });
     }
 
     async getIssue(org: string, repo: string, number: number) {
@@ -166,13 +151,7 @@ export default class GithubService {
             number: number
         });
 
-        return {
-            name: issueRaw.title,
-            id: issueRaw.id,
-            state: issueRaw.state,
-            number: issueRaw.number,
-            url: issueRaw.html_url
-        } as Issue;
+        return new Issue(issueRaw);
     }
 
     async getMilestones(org: string, repo: string, state?: "open" | "closed" | "all") {
@@ -183,13 +162,7 @@ export default class GithubService {
         };
 
         let mapper = (r: any) => {
-            return {
-                name: r.title,
-                id: r.id,
-                state: r.state,
-                number: r.number,
-                url: r.html_url
-            } as Milestone;
+            return new Milestone(r);
         };
 
         let milestones = await GithubService.getPagedCollection(params, this.github.issues.getMilestones, mapper);
@@ -204,42 +177,88 @@ export default class GithubService {
             number: number
         });
 
-        return {
-            name: milestoneRaw.title,
-            id: milestoneRaw.id,
-            state: milestoneRaw.state,
-            number: milestoneRaw.number,
-            url: milestoneRaw.html_url
-        } as Milestone;
+        return new Milestone(milestoneRaw);
     }
 }
 
 
-export interface EntityBase {
-    name: string,
+export class EntityBase {
+    name: string;
     id: any
+
+    constructor(r: any) {
+        this.name = r.name
+        this.id = r.id;
+    }
 }
 
-export interface Repo extends EntityBase {
+export class Repo extends EntityBase {
 }
 
-export interface Organization extends EntityBase {
+export class Organization extends EntityBase {
+    constructor(r: any) {
+        super(r);
+        this.name = r.login;
+    }
 }
 
-export interface Milestone extends EntityBase {
+export class Milestone extends EntityBase {
+
     state: "open" | "closed";
     number: number;
     url: string;
+    created_at: Date;
+    due_on: Date;
+    closed_at: Date;
+
+    constructor(r: any) {
+        super(r);
+
+        this.name = r.title;
+        this.id = r.id;
+        this.state = r.state;
+        this.number = r.number;
+        this.url = r.html_url;
+        this.created_at = parseDate(r.created_at);
+        this.due_on = parseDate(r.due_on);
+        this.closed_at = parseDate(r.closed_at);
+    }
 }
 
-export interface Issue extends EntityBase {
+export class Issue extends EntityBase {
+
     state: "open" | "closed";
     number: number;
     url: string;
+
+    constructor(r: any) {
+        super(r);
+
+        this.name = r.title;
+        this.state = r.state;
+        this.number = r.number;
+        this.url = r.html_url;
+    }
 }
 
-export interface User extends EntityBase {
-    login: string,
-    email: string,
-    avatar_url: string
+export class User extends EntityBase {
+    login: string;
+    email: string;
+    avatar_url: string;
+    
+    constructor(r: any) {
+        super(r);
+
+        this.login = r.login;
+        this.email = r.email;
+        this.avatar_url = r.avatar_url;
+    }
+}
+
+function parseDate(d: string) {
+    if (d === "" || d == undefined) {
+        return null;
+    } else {
+        return new Date(d);
+    }
 }

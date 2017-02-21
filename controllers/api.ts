@@ -1,4 +1,6 @@
-import LagashLogger from "lagash-logger" ;
+import { TimeTracking } from "./../service/timeTrackingService";
+import { Utils, IssueTimeTrackingData } from "./utils";
+import LagashLogger from "lagash-logger";
 import { TimeTrackingService } from "../service/timeTrackingService";
 import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller } from "kwyjibo";
 import * as K from "kwyjibo";
@@ -11,9 +13,9 @@ import GithubService from "../service/githubService";
 export default class API {
 
     private static logger: LagashLogger;
-    
+
     constructor() {
-        API.logger = new LagashLogger("API");        
+        API.logger = new LagashLogger("API");
     }
 
     static getToken(context: Context): string {
@@ -106,7 +108,7 @@ export default class API {
 
         let user = await gh.getCurrentUser();
 
-        
+
 
         await timeTracking.addDedicatedEffort(issueId, amount, user.login);
 
@@ -145,6 +147,60 @@ export default class API {
         let timeTracking = new TimeTrackingService();
 
         return timeTracking.getTimeTracking(issueId);
+    }
+
+    @K.Get("/timeTrackingPerDayByMilestone")
+    async getTimeTrackingPerDayByMilestone(
+        context: Context,
+        @K.FromQuery("org") org: string,
+        @K.FromQuery("repo") repo: string,
+        @K.FromQuery("number") number: string) {
+
+        // VALIDATE: number
+
+        // TODO: Fix this. It's not working
+
+        let gh = new GithubService(API.getToken(context));
+        let tt = new TimeTrackingService();
+
+        let milestone = await gh.getMilestone(org, repo, parseInt(number));
+        let issues = await gh.getIssuesByMilestone(org, repo, milestone.number, { state: "all" });
+
+        let limitDate: Date;
+        if (milestone.closed_at != undefined) {
+            limitDate = milestone.closed_at;
+        } else {
+            limitDate = new Date();
+        }
+
+        limitDate.setDate(limitDate.getDate() + 1);
+
+        let startingDate: Date = milestone.created_at;
+        let estimatesByDate: K.Dictionary<K.Dictionary<IssueTimeTrackingData>> = {};
+
+        for (let issue of issues) {
+            let current = new Date(startingDate.getFullYear(), startingDate.getMonth(), startingDate.getDate());
+            current.setDate(current.getDate() + 1);
+            let last: IssueTimeTrackingData;
+
+            while (current < limitDate) {
+                let key = current.toISOString();
+
+                let newTimeTrackingData = await Utils.getIssueTimeTrackingDataUpToDate(issue.id, current);
+
+                if (last == undefined || !IssueTimeTrackingData.areEqual(last, newTimeTrackingData)) {
+                    if (estimatesByDate[key] == undefined) {
+                        estimatesByDate[key] = {};
+                    }
+                    estimatesByDate[key]["issue-" + issue.id] = newTimeTrackingData;
+                }
+
+                last = newTimeTrackingData;
+                current.setDate(current.getDate() + 1);
+            }
+        }
+
+        return estimatesByDate;
     }
 
     @K.Get()

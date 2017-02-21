@@ -1,3 +1,4 @@
+import { Utils, IssueTimeTrackingData } from "./utils";
 import { Issue } from './../service/githubService';
 import { TimeTracking, TimeTrackingService } from "../service/timeTrackingService";
 import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller } from "kwyjibo";
@@ -89,7 +90,7 @@ class Frontend {
         let gh = new GithubService(API.getToken(context));
         let issue = await gh.getIssue(org, repo, parseInt(number));
 
-        let issueData = await this.getIssueTimeTrackingData(issue.id);;
+        let issueData = await Utils.getIssueTimeTrackingData(issue.id);;
 
         return {
             ...issueData,
@@ -100,7 +101,11 @@ class Frontend {
     }
 
     @Get()
-    async milestone(context: Context, @K.FromQuery("org") org: string, @K.FromQuery("repo") repo: string, @K.FromQuery("number") number: string): Promise<K.Renderable> {
+    async milestone(
+        context: Context, 
+        @K.FromQuery("org") org: string, 
+        @K.FromQuery("repo") repo: string, 
+        @K.FromQuery("number") number: string): Promise<K.Renderable> {
         // VALIDATE: number
 
         let gh = new GithubService(API.getToken(context));
@@ -110,7 +115,7 @@ class Frontend {
         let issues = await gh.getIssuesByMilestone(org, repo, milestone.number, { state: "all" });
 
         for (let issue of issues) {
-            issue["timeTrackingData"] = await this.getIssueTimeTrackingData(issue.id);
+            issue["timeTrackingData"] = await Utils.getIssueTimeTrackingData(issue.id);
         }
 
         let currentEstimate = 0;
@@ -129,18 +134,18 @@ class Frontend {
             let efforts = issues.map(i => {
                 let issueTimeTrackingData = i["timeTrackingData"] as IssueTimeTrackingData;
                 if (issueTimeTrackingData.timeTracking.dedicatedEffort.length > 0) {
-                    return issueTimeTrackingData.timeTracking.dedicatedEffort.map(d => { return d.amount }).reduce(Frontend.sum);
+                    return issueTimeTrackingData.timeTracking.dedicatedEffort.map(d => { return d.amount }).reduce(Utils.sum);
                 } else {
                     return 0;
                 }
             });
 
             if (efforts.length > 0) {
-                totalEffort = efforts.reduce(Frontend.sum);
+                totalEffort = efforts.reduce(Utils.sum);
             }
 
             if (estimates.length > 0) {
-                currentEstimate = estimates.reduce(Frontend.sum);
+                currentEstimate = estimates.reduce(Utils.sum);
             }
         }
 
@@ -155,34 +160,5 @@ class Frontend {
         };
     }
 
-    private static sum(n1: number, n2: number) {
-        return n1 + n2;
-    }
-
-    private async getIssueTimeTrackingData(issueId: string) {
-        let timeTrackingService = new TimeTrackingService();
-        let timeTracking = await timeTrackingService.getTimeTracking(issueId);
-
-        let currentEstimate = 0;
-        if (timeTracking.estimates.length > 0) {
-            currentEstimate = timeTracking.estimates[0].amount;
-        }
-
-        let totalEffort = 0;
-        if (timeTracking.dedicatedEffort.length > 0) {
-            totalEffort = timeTracking.dedicatedEffort.map((e) => e.amount).reduce(Frontend.sum);
-        }
-
-        return {
-            timeTracking: timeTracking,
-            currentEstimate: currentEstimate,
-            totalEffort: totalEffort
-        } as IssueTimeTrackingData;
-    }
-}
-
-interface IssueTimeTrackingData {
-    timeTracking: TimeTracking,
-    currentEstimate: number,
-    totalEffort: number
+    
 }
