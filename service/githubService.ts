@@ -162,6 +162,8 @@ export default class GithubService {
         };
 
         let mapper = (r: any) => {
+            r.repo = repo;
+            r.org = org;
             return new Milestone(r);
         };
 
@@ -177,6 +179,8 @@ export default class GithubService {
             number: number
         });
 
+        milestoneRaw.repo = repo;
+        milestoneRaw.org = org;
         return new Milestone(milestoneRaw);
     }
 }
@@ -210,10 +214,14 @@ export class Milestone extends EntityBase {
     created_at: Date;
     due_on: Date;
     closed_at: Date;
+    repo: string;
+    org: string;
 
     constructor(r: any) {
         super(r);
 
+        this.repo = r.repo;
+        this.org = r.org;
         this.name = r.title;
         this.id = r.id;
         this.state = r.state;

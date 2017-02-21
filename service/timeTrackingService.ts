@@ -10,8 +10,8 @@ export class TimeTrackingService {
     private static redisClient: RedisService;
 
     async getTimeTracking(issueId: string) {
-        let estimates: Effort[] = await TimeTrackingService.redisClient.getList(`${issueId}-estimates`);
-        let dedicatedEffort: Effort[] = await TimeTrackingService.redisClient.getList(`${issueId}-dedicated`);
+        let estimates = Effort.parseArray(await TimeTrackingService.redisClient.getList(`${issueId}-estimates`));
+        let dedicatedEffort = Effort.parseArray(await TimeTrackingService.redisClient.getList(`${issueId}-dedicated`));
 
         return {
             issueId: issueId,
@@ -73,6 +73,16 @@ export class Effort {
     date: Date;
     amount: number;
     user: string;
+
+    static parseArray(arr: any[]) {
+        return arr.map(e => {
+            return {
+                date: new Date(e.date),
+                amount: e.amount,
+                user: e.user
+            } as Effort;
+        });
+    }
 
     static areEqual(e1: Effort, e2: Effort) {
         if (e1.date != e2.date) {

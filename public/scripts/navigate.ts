@@ -129,7 +129,6 @@ class Navigate {
             document["urls"].API.organizations.get,
             undefined,
             (data) => {
-                document
                 for (let org of data) {
                     let li = $(`<li />`);
                     li.attr("id", org.id);

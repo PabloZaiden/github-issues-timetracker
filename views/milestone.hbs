@@ -4,10 +4,14 @@
     <link rel="stylesheet" type="text/css" href="/css/styles.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
     <script type="text/javascript" src="/scripts/milestone.js"></script>
+    <script type="text/javascript" src="/scripts/js/bargraph.js"></script>
     <script type="text/javascript" src="{{urls.Frontend.urls.get}}?type=script"></script>
 </head>
 
 <body>
+    <input type="hidden" id="milestone" value="{{milestone.number}}" />
+    <input type="hidden" id="repo" value="{{milestone.repo}}" />
+    <input type="hidden" id="org" value="{{milestone.org}}" />
     <h1><a target="_blank" href="{{milestone.url}}">{{milestone.name}}</a></h1>
     <ul>
         <li>State: {{milestone.state}}</li>
@@ -15,12 +19,17 @@
         <li>{{milestone.url}}</li>
     </ul>
 
+
+
     <h2>Estimates (current: {{currentEstimate}} hs)</h2>
     <h2>Dedicated Effort (total: {{totalEffort}} hs)</h2>
 
+    <h2>Burndown chart</h2>
+    <canvas id="burndown" />
+
     <ul>
         {{#each issues}}
-            <li><a href="{{../urls.Frontend.quickUrl.get}}?url={{url}}">{{name}}</a> ({{number}}) - <strong>{{timeTrackingData.totalEffort}}</strong> of <strong>{{timeTrackingData.currentEstimate}}</strong> hs consumed </li>    
+        <li><a href="{{../urls.Frontend.quickUrl.get}}?url={{url}}">{{name}}</a> ({{number}}) - <strong>{{timeTrackingData.totalEffort}}</strong>            of <strong>{{timeTrackingData.currentEstimate}}</strong> hs consumed </li>
         {{/each}}
     </ul>
 </body>

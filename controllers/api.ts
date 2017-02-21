@@ -6,6 +6,7 @@ import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Control
 import * as K from "kwyjibo";
 import App from "../app";
 import GithubService from "../service/githubService";
+import * as TomCollins from "tom-collins";
 
 @K.Middleware(App.authorize)
 @Controller("/api")
@@ -121,7 +122,6 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromBody() body: any) {
 
-
         // VALIDATE: body.amount
 
         let timeTracking = new TimeTrackingService();
@@ -150,20 +150,21 @@ export default class API {
     }
 
     @K.Get("/timeTrackingPerDayByMilestone")
-    async getTimeTrackingPerDayByMilestone(
+    async timeTrackingPerDayByMilestone(
         context: Context,
         @K.FromQuery("org") org: string,
         @K.FromQuery("repo") repo: string,
-        @K.FromQuery("number") number: string) {
+        @K.FromQuery("number") numberRaw: string) {
 
-        // VALIDATE: number
-
-        // TODO: Fix this. It's not working
-
+        let number = parseInt(numberRaw)
+        if (!number || isNaN(number) || number < 1) {
+            throw new Error("Number must be a positive integer");
+        }
+        
         let gh = new GithubService(API.getToken(context));
         let tt = new TimeTrackingService();
 
-        let milestone = await gh.getMilestone(org, repo, parseInt(number));
+        let milestone = await gh.getMilestone(org, repo, number);
         let issues = await gh.getIssuesByMilestone(org, repo, milestone.number, { state: "all" });
 
         let limitDate: Date;
@@ -176,7 +177,7 @@ export default class API {
         limitDate.setDate(limitDate.getDate() + 1);
 
         let startingDate: Date = milestone.created_at;
-        let estimatesByDate: K.Dictionary<K.Dictionary<IssueTimeTrackingData>> = {};
+        let estimatesByDate: K.Dictionary<DayEntry> = {};
 
         for (let issue of issues) {
             let current = new Date(startingDate.getFullYear(), startingDate.getMonth(), startingDate.getDate());
@@ -184,15 +185,23 @@ export default class API {
             let last: IssueTimeTrackingData;
 
             while (current < limitDate) {
-                let key = current.toISOString();
+                let key = current.toISOString().substr(0, 10); // only get the date;
 
                 let newTimeTrackingData = await Utils.getIssueTimeTrackingDataUpToDate(issue.id, current);
 
                 if (last == undefined || !IssueTimeTrackingData.areEqual(last, newTimeTrackingData)) {
                     if (estimatesByDate[key] == undefined) {
-                        estimatesByDate[key] = {};
+                        estimatesByDate[key] = {
+                            currentEstimate: 0,
+                            totalEffort: 0,
+                            issues: {}
+                        };
                     }
-                    estimatesByDate[key]["issue-" + issue.id] = newTimeTrackingData;
+                    estimatesByDate[key].issues["issue-" + issue.id] = newTimeTrackingData;
+
+                    estimatesByDate[key].currentEstimate += newTimeTrackingData.currentEstimate;
+
+                    estimatesByDate[key].totalEffort += newTimeTrackingData.totalEffort;
                 }
 
                 last = newTimeTrackingData;
@@ -200,7 +209,31 @@ export default class API {
             }
         }
 
-        return estimatesByDate;
+        //order keys by date ascending
+        let keys = [];
+        for (let key in estimatesByDate) {
+            keys.push(key);
+        }
+
+        keys.sort((a, b) => {
+            let date1 = new Date(a);
+            let date2 = new Date(b);
+
+            if (date1 == date2) {
+                return 0;
+            } else if (date1 > date2) {
+                return 1;
+            } else {
+                return -1;
+            }
+        });
+
+        let retObj: K.Dictionary<DayEntry> = {};
+        for (let key of keys) {
+            retObj[key] = estimatesByDate[key];
+        }
+
+        return retObj;
     }
 
     @K.Get()
@@ -211,4 +244,12 @@ export default class API {
 
         return user;
     }
+}
+
+interface DayEntry {
+    issues: {
+        [key: string]: IssueTimeTrackingData;
+    };
+    currentEstimate: number;
+    totalEffort: number;
 }
