@@ -5,6 +5,8 @@ class Milestone {
     private repo: string;
     private org: string;
 
+    private burndown: JQuery;
+
     private static instance: Milestone;
     static init() {
         Milestone.instance = new Milestone();
@@ -15,6 +17,9 @@ class Milestone {
             this.milestone = parseInt($("#milestone").val());
             this.repo = $("#repo").val();
             this.org = $("#org").val();
+            this.burndown = $("#burndown");
+
+            this.burndown.hide();
 
             this.loadTimeTrackingData();
         });
@@ -40,6 +45,12 @@ class Milestone {
                 values.push({x: new Date(key), y: pending });
             }
         }
+
+        if (values.length == 0) {
+            return;
+        }
+
+        this.burndown.show();
 
         var chart = new CanvasJS.Chart("burndown", {
 			title: {
