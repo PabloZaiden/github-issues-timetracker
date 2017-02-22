@@ -32,30 +32,27 @@ class Milestone {
     }
 
     drawBurnDown(data: any) {
-        let doc: any = document;
-        let ctx = doc.getElementById("burndown").getContext("2d");
-
-        var graph: any = new BarGraph(ctx);
-        graph.margin = 2;
-        graph.width = 450;
-        graph.height = 150;
-        graph.xAxisLabelArr = []; // = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
         let values = [];
         for (let key in data) {
             let pending = data[key].currentEstimate - data[key].totalEffort;
-            if (pending < 0) {
-                pending = 0;
-            }
+            
             if (values.length != 0 || pending > 0) {
-                graph.xAxisLabelArr.push(key);
-                values.push(pending);
+                values.push({x: new Date(key), y: pending });
             }
         }
 
-        graph.update(values);
+        var chart = new CanvasJS.Chart("burndown", {
+			title: {
+				text: "Burndown chart"
+			},
+			data: [{
+				type: "line",
+				dataPoints: values
+			}]
+		});
+		chart.render();
     }
 }
 
 Milestone.init();
-declare let BarGraph: any;
+declare let CanvasJS: any;

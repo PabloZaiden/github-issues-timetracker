@@ -177,6 +177,7 @@ export default class API {
         limitDate.setDate(limitDate.getDate() + 1);
 
         let startingDate: Date = milestone.created_at;
+        
         let estimatesByDate: K.Dictionary<DayEntry> = {};
 
         for (let issue of issues) {
