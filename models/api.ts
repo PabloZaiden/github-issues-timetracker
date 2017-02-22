@@ -1,3 +1,15 @@
+import Utils from "../utils";
+
+import { Field, PredefinedMaps } from "tom-collins";
+
+export class AmountPayload {
+    @Field({ 
+        typeConstraints: Utils.Validations.positiveNatural,
+        maps: PredefinedMaps.stringToNumber
+    })
+    amount: number;
+}
+
 export interface IssueTimeTrackingData {
     timeTracking: TimeTracking;
     currentEstimate: number;
@@ -92,7 +104,7 @@ export class User extends EntityBase {
     login: string;
     email: string;
     avatar_url: string;
-    
+
     constructor(r: any) {
         super(r);
 
@@ -111,5 +123,4 @@ function parseDate(d: string) {
 }
 
 import * as K from "kwyjibo";
-
 export import Dictionary = K.Dictionary;

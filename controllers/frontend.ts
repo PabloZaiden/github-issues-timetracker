@@ -6,7 +6,7 @@ import * as K from "kwyjibo";
 import App from "../app";
 import GithubService from "../service/githubService";
 import API from "./api";
-
+import * as TomCollins from "tom-collins";
 
 @K.Middleware(App.authorize)
 @Controller("/frontend")
@@ -14,6 +14,11 @@ class Frontend {
 
     @Get("/urls")
     urls(context: Context, @K.FromQuery("type") type?: string) {
+        TomCollins.parseString(type, {
+            optional: true,
+            pattern: ["script"]
+        })
+
         if (type === "script") {
             return `document["urls"] = ${JSON.stringify(K.getRoutes())}`;
         } else {
@@ -36,9 +41,9 @@ class Frontend {
 
     @Get()
     async quickUrl(context: Context, @K.FromQuery("url") url: string) {
-        if (url == undefined) {
-            throw new Error("Missing url");
-        }
+        TomCollins.parseString(url, {
+            pattern: TomCollins.PredefinedPattern.Uri
+        });
 
         let githubUrlBase = ["https://github.com/", "https://www.github.com/", "https://api.github.com/repos/"];
 
@@ -84,11 +89,19 @@ class Frontend {
     }
 
     @Get()
-    async issue(context: Context, @K.FromQuery("org") org: string, @K.FromQuery("repo") repo: string, @K.FromQuery("number") number: string): Promise<K.Renderable> {
-        // VALIDATE: number
+    async issue(
+        context: Context, 
+        @K.FromQuery("org") org: string, 
+        @K.FromQuery("repo") repo: string, 
+        @K.FromQuery("number") numberRaw: string): Promise<K.Renderable> {
+        
+        TomCollins.parseString(org, Utils.Validations.notEmpty);
+        TomCollins.parseString(repo, Utils.Validations.notEmpty);
+        let number = TomCollins.parseFloat(numberRaw, Utils.Validations.positiveNatural);
 
+        
         let gh = new GithubService(API.getToken(context));
-        let issue = await gh.getIssue(org, repo, parseInt(number));
+        let issue = await gh.getIssue(org, repo, number);
 
         let issueData = await Utils.getIssueTimeTrackingData(issue.id);;
 
@@ -105,12 +118,15 @@ class Frontend {
         context: Context, 
         @K.FromQuery("org") org: string, 
         @K.FromQuery("repo") repo: string, 
-        @K.FromQuery("number") number: string): Promise<K.Renderable> {
-        // VALIDATE: number
+        @K.FromQuery("number") numberRaw: string): Promise<K.Renderable> {
+        
+        TomCollins.parseString(org, Utils.Validations.notEmpty);
+        TomCollins.parseString(repo, Utils.Validations.notEmpty);
+        let number = TomCollins.parseFloat(numberRaw, Utils.Validations.positiveNatural);
 
         let gh = new GithubService(API.getToken(context));
 
-        let milestone = await gh.getMilestone(org, repo, parseInt(number));
+        let milestone = await gh.getMilestone(org, repo, number);
 
         let issues = await gh.getIssuesByMilestone(org, repo, milestone.number, { state: "all" });
 

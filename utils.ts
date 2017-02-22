@@ -1,5 +1,6 @@
 import { IssueTimeTrackingData, Effort, TimeTracking } from "./models/api";
 import TimeTrackingService from "./service/timeTrackingService";
+import * as TomCollins from "tom-collins";
 
 export default class Utils {
     static sum(n1: number, n2: number) {
@@ -114,6 +115,17 @@ export default class Utils {
             }
 
             return true;
+        }
+    }
+
+    static Validations = {
+        notEmpty: {
+            minLength: 1
+        },
+
+        positiveNatural: {
+            minimum: 1,
+            multipleOf: 1
         }
     }
 }

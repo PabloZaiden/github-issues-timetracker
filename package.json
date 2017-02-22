@@ -33,6 +33,6 @@
     "passport-github": "^1.1.0",
     "redis": "^2.6.5",
     "request": "^2.79.0",
-    "tom-collins": "^0.0.1"
+    "tom-collins": "0.0.13"
   }
 }

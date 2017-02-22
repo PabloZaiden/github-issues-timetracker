@@ -1,5 +1,5 @@
 import Utils from "../utils";
-import { DayEntry, IssueTimeTrackingData } from "../models/api";
+import { DayEntry, IssueTimeTrackingData, AmountPayload } from "../models/api";
 import LagashLogger from "lagash-logger";
 import TimeTrackingService from "../service/timeTrackingService";
 import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller } from "kwyjibo";
@@ -45,11 +45,13 @@ export default class API {
     @K.Get()
     async repos(
         context: Context,
-        @K.FromQuery("org") orgName: string) {
+        @K.FromQuery("org") org: string) {
+
+        TomCollins.parseString(org, Utils.Validations.notEmpty);
 
         let gh = new GithubService(API.getToken(context));
 
-        let repos = await gh.getRepos(orgName);
+        let repos = await gh.getRepos(org);
 
         return repos;
     }
@@ -59,6 +61,9 @@ export default class API {
         context: Context,
         @K.FromQuery("org") org: string,
         @K.FromQuery("repo") repo: string) {
+
+        TomCollins.parseString(org, Utils.Validations.notEmpty);
+        TomCollins.parseString(repo, Utils.Validations.notEmpty);
 
         let gh = new GithubService(API.getToken(context));
 
@@ -72,19 +77,16 @@ export default class API {
         context: Context,
         @K.FromQuery("org") org: string,
         @K.FromQuery("repo") repo: string,
-        @K.FromQuery("state") state?: string) {
+        @K.FromQuery("state") state?: "open" | "closed" | "all") {
 
-        // VALIDATE: query.state
+        TomCollins.parseString(org, Utils.Validations.notEmpty);
+        TomCollins.parseString(repo, Utils.Validations.notEmpty);
+        TomCollins.parseString(state, {
+            pattern: ["open", "closed", "all"],
+            optional: true
+        });
 
         let gh = new GithubService(API.getToken(context));
-
-        if (state == undefined) {
-            state = "all";
-        }
-
-        if (state !== "all" && state !== "open" && state !== "closed") {
-            throw new Error("Invalid state");
-        }
 
         let milestones = await gh.getMilestones(org, repo, state);
 
@@ -97,21 +99,16 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromBody() body: any) {
 
-        // VALIDATE: body.amount
-
+        TomCollins.parseString(issueId, Utils.Validations.notEmpty);
+        let payload = TomCollins.parse(AmountPayload, body);
+        
         let timeTracking = new TimeTrackingService();
-        let amount = parseInt(body.amount);
-        if (!amount || isNaN(amount) || amount < 1) {
-            throw new Error("Amount must be a positive integer");
-        }
 
         let gh = new GithubService(API.getToken(context));
 
         let user = await gh.getCurrentUser();
 
-
-
-        await timeTracking.addDedicatedEffort(issueId, amount, user.login);
+        await timeTracking.addDedicatedEffort(issueId, payload.amount, user.login);
 
         context.response.sendStatus(200);
     }
@@ -122,19 +119,16 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromBody() body: any) {
 
-        // VALIDATE: body.amount
+        TomCollins.parseString(issueId, Utils.Validations.notEmpty);
+        let payload = TomCollins.parse(AmountPayload, body);
 
         let timeTracking = new TimeTrackingService();
-        let amount = parseInt(body.amount);
-        if (!amount || isNaN(amount) || amount < 1) {
-            throw new Error("Amount must be a positive integer");
-        }
 
         let gh = new GithubService(API.getToken(context));
 
         let user = await gh.getCurrentUser();
 
-        await timeTracking.addEstimate(issueId, amount, user.login);
+        await timeTracking.addEstimate(issueId, payload.amount, user.login);
 
         context.response.sendStatus(200);
     }
@@ -143,6 +137,8 @@ export default class API {
     async timeTracking(
         context: Context,
         @K.FromPath("issueId") issueId: string) {
+
+        TomCollins.parseString(issueId, Utils.Validations.notEmpty);
 
         let timeTracking = new TimeTrackingService();
 
@@ -156,10 +152,9 @@ export default class API {
         @K.FromQuery("repo") repo: string,
         @K.FromQuery("number") numberRaw: string) {
 
-        let number = parseInt(numberRaw)
-        if (!number || isNaN(number) || number < 1) {
-            throw new Error("Number must be a positive integer");
-        }
+        TomCollins.parseString(org, Utils.Validations.notEmpty);
+        TomCollins.parseString(repo, Utils.Validations.notEmpty);
+        let number = TomCollins.parseFloat(numberRaw, Utils.Validations.positiveNatural);
 
         let gh = new GithubService(API.getToken(context));
         let tt = new TimeTrackingService();
