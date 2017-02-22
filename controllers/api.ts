@@ -1,7 +1,7 @@
-import { TimeTracking } from "./../service/timeTrackingService";
-import { Utils, IssueTimeTrackingData } from "./utils";
+import Utils from "../utils";
+import { DayEntry, IssueTimeTrackingData } from "../models/api";
 import LagashLogger from "lagash-logger";
-import { TimeTrackingService } from "../service/timeTrackingService";
+import TimeTrackingService from "../service/timeTrackingService";
 import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller } from "kwyjibo";
 import * as K from "kwyjibo";
 import App from "../app";
@@ -160,7 +160,7 @@ export default class API {
         if (!number || isNaN(number) || number < 1) {
             throw new Error("Number must be a positive integer");
         }
-        
+
         let gh = new GithubService(API.getToken(context));
         let tt = new TimeTrackingService();
 
@@ -177,7 +177,7 @@ export default class API {
         limitDate.setDate(limitDate.getDate() + 1);
 
         let startingDate: Date = milestone.created_at;
-        
+
         let estimatesByDate: K.Dictionary<DayEntry> = {};
 
         for (let issue of issues) {
@@ -190,7 +190,7 @@ export default class API {
 
                 let newTimeTrackingData = await Utils.getIssueTimeTrackingDataUpToDate(issue.id, current);
 
-                if (last == undefined || !IssueTimeTrackingData.areEqual(last, newTimeTrackingData)) {
+                if (last == undefined || !Utils.IssueTimeTrackingData.areEqual(last, newTimeTrackingData)) {
                     if (estimatesByDate[key] == undefined) {
                         estimatesByDate[key] = {
                             currentEstimate: 0,
@@ -245,12 +245,4 @@ export default class API {
 
         return user;
     }
-}
-
-interface DayEntry {
-    issues: {
-        [key: string]: IssueTimeTrackingData;
-    };
-    currentEstimate: number;
-    totalEffort: number;
 }

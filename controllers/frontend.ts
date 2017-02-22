@@ -1,6 +1,6 @@
-import { Utils, IssueTimeTrackingData } from "./utils";
-import { Issue } from './../service/githubService';
-import { TimeTracking, TimeTrackingService } from "../service/timeTrackingService";
+import Utils from "../utils";
+import {IssueTimeTrackingData, Issue} from "../models/api"; 
+import TimeTrackingService from "../service/timeTrackingService";
 import { DocController, DocAction, Get, Post, Context, ActionMiddleware, Controller } from "kwyjibo";
 import * as K from "kwyjibo";
 import App from "../app";

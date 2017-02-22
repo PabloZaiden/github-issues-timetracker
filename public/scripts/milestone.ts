@@ -1,4 +1,4 @@
-import * as d3 from "@types/d3";
+import {Dictionary, DayEntry} from "../../models/api";
 
 class Milestone {
     private milestone: number;
@@ -31,7 +31,7 @@ class Milestone {
         );
     }
 
-    drawBurnDown(data: any) {
+    drawBurnDown(data: Dictionary<DayEntry>) {
         let values = [];
         for (let key in data) {
             let pending = data[key].currentEstimate - data[key].totalEffort;
