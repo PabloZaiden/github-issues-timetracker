@@ -22,7 +22,7 @@
     <h2>Estimates (current: {{currentEstimate}} hs)</h2>
     <ul>
         {{#each timeTracking.estimates}}
-        <li><strong>{{amount}}</strong> hs by <em>{{user}}</em> on {{date}}</li>
+        <li><strong>{{amount}}</strong> hs by <em>{{user}}</em> on {{date}} <button amount="{{amount}}" class="remove estimate">Remove</button></li>
         {{/each}}
     </ul>
 
@@ -32,7 +32,7 @@
     <h2>Dedicated Effort (total: {{totalEffort}} hs)</h2>
     <ul>
         {{#each timeTracking.dedicatedEffort}}
-        <li><strong>{{amount}}</strong> hs by <em>{{user}}</em> on {{date}}</li>
+        <li><strong>{{amount}}</strong> hs by <em>{{user}}</em> on {{date}} <button amount="{{amount}}" class="remove effort">Remove</button></li>
         {{/each}}
     </ul>
 </body>

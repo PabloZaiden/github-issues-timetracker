@@ -1,19 +1,22 @@
 import { TimeTracking } from "./../models/api";
 import RedisService from "./redisService";
-import Utils from "../utils"; 
+import Utils from "../utils";
 
 export default class TimeTrackingService {
+    private static estimatesListName = "estimates";
+    private static dedicatedEffortListName = "dedicated";
+    private static redisClient: RedisService;
+
     constructor() {
         if (TimeTrackingService.redisClient == undefined) {
             TimeTrackingService.redisClient = new RedisService();
         }
     }
 
-    private static redisClient: RedisService;
 
     async getTimeTracking(issueId: string) {
-        let estimates = Utils.Effort.parseArray(await TimeTrackingService.redisClient.getList(`${issueId}-estimates`));
-        let dedicatedEffort = Utils.Effort.parseArray(await TimeTrackingService.redisClient.getList(`${issueId}-dedicated`));
+        let estimates = Utils.Effort.parseArray(await TimeTrackingService.redisClient.getList(`${issueId}-${TimeTrackingService.estimatesListName}`));
+        let dedicatedEffort = Utils.Effort.parseArray(await TimeTrackingService.redisClient.getList(`${issueId}-${TimeTrackingService.dedicatedEffortListName}`));
 
         return {
             issueId: issueId,
@@ -24,15 +27,34 @@ export default class TimeTrackingService {
     }
 
     async addEstimate(issueId: string, amount: number, user: string) {
-        return this.addToList(`${issueId}-estimates`, amount, user);
+        return this.addToList(issueId, TimeTrackingService.estimatesListName, amount, user);
     }
 
     async addDedicatedEffort(issueId: string, amount: number, user: string) {
-        return this.addToList(`${issueId}-dedicated`, amount, user);
+        return this.addToList(issueId, TimeTrackingService.dedicatedEffortListName, amount, user);
     }
 
-    private async addToList(listName: string, amount: number, user: string) {
-        let redis = new RedisService();
-        return redis.addToList(listName, { date: new Date(), amount: amount, user });
+    async removeDedicatedEffort(issueId: string, amount: number, user: string) {
+        return this.removeFromList(issueId, TimeTrackingService.dedicatedEffortListName, amount, user);
+    }
+
+    async removeEstimate(issueId: string, amount: number, user: string) {
+        return this.removeFromList(issueId, TimeTrackingService.estimatesListName, amount, user);
+    }
+
+    private async removeFromList(issueId: string, listName: string, amount: number, user: string) {
+        let list = Utils.Effort.parseArray(await TimeTrackingService.redisClient.getList(`${issueId}-${listName}`));
+
+        let index = list.findIndex((effort) => {
+            return effort.user === user && effort.amount === amount
+        });
+
+        if (index >= 0) {
+            return TimeTrackingService.redisClient.removeFromList(`${issueId}-${listName}`, index);
+        }
+    }
+
+    private async addToList(issueId: string, listName: string, amount: number, user: string) {
+        return TimeTrackingService.redisClient.addToList(`${issueId}-${listName}`, { date: new Date(), amount: amount, user });
     }
 }

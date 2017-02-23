@@ -93,6 +93,46 @@ export default class API {
         return milestones;
     }
 
+    @K.Delete("issue/:issueId/effort/:amount")
+    async removeEffort(
+        context: Context,
+        @K.FromPath("issueId") issueId: string,
+        @K.FromPath("amount") amount: string) {
+
+        TomCollins.parseString(issueId, Utils.Validations.notEmpty);
+        let number = TomCollins.parseFloat(amount, Utils.Validations.positiveNatural);
+                
+        let timeTracking = new TimeTrackingService();
+
+        let gh = new GithubService(API.getToken(context));
+
+        let user = await gh.getCurrentUser();
+
+        await timeTracking.removeDedicatedEffort(issueId, number, user.login);
+
+        context.response.sendStatus(200);
+    }
+
+     @K.Delete("issue/:issueId/estimate/:amount")
+    async removeEstimate(
+        context: Context,
+        @K.FromPath("issueId") issueId: string,
+        @K.FromPath("amount") amount: string) {
+
+        TomCollins.parseString(issueId, Utils.Validations.notEmpty);
+        let number = TomCollins.parseFloat(amount, Utils.Validations.positiveNatural);
+                
+        let timeTracking = new TimeTrackingService();
+
+        let gh = new GithubService(API.getToken(context));
+
+        let user = await gh.getCurrentUser();
+
+        await timeTracking.removeEstimate(issueId, number, user.login);
+
+        context.response.sendStatus(200);
+    }
+
     @K.Post("issue/:issueId/effort")
     async effort(
         context: Context,

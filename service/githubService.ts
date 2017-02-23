@@ -27,7 +27,7 @@ export default class GithubService {
         });
     }
 
-    private static async getPagedCollection<T, U>(params: any, callback: (params: any) => Promise<any>, mapper: (p: T) => U) {
+    private async getPagedCollection<T, U>(params: any, callback: (params: any) => Promise<any>, mapper: (p: T) => U) {
         let more = true;
         let current = 1;
         let raw: any[] = [];
@@ -41,33 +41,15 @@ export default class GithubService {
 
             let page: any[] = await callback(fullParams);
 
-            let lastPage = GithubService.getLastPage(page);
-
             raw.push(...page);
-            more = current !== lastPage;
+            let hasNext = this.github.hasNextPage(page as any);
+            more = hasNext != undefined;
             current++;
         }
 
         let actual = raw.map(mapper);
 
         return actual;
-    }
-
-    private static getLastPage(arr: any[]): number {
-        let meta = arr["meta"];
-        let links: string = meta.link;
-
-        if (links == undefined) {
-            return 1;
-        }
-
-        let parts = links.split(",");
-        let lastUrl = parts.find(p => p.endsWith("rel=\"last\""));
-        let matches = /\?page=([0-9]+)&/.exec(lastUrl);
-
-        let lastPage = parseInt(matches[1]);
-
-        return lastPage;
     }
 
     async getCurrentUser() {
@@ -108,19 +90,42 @@ export default class GithubService {
             return new Organization(m.organization);
         });
 
+        // add the current user as an organization
+        // TODO: add this when the new github lib is available
+        //let currentUser = await this.github.users.get();
+
+        let currentUser = await this.getCurrentUser();
+
+        orgs.push({
+            id: currentUser.id,
+            name: currentUser.login
+        });
+
         return orgs;
     }
 
     async getRepos(orgName: string) {
-        let params = {
-            org: orgName
-        };
+        let user = await this.getCurrentUser();
 
         let mapper = (r: any) => {
             return new Repo(r);
         };
 
-        let repos = await GithubService.getPagedCollection(params, this.github.repos.getForOrg, mapper);
+
+        let repos: Repo[];
+
+        if (user.login === orgName) {
+            let params = {
+                username: user.login
+            };
+
+            repos = await this.getPagedCollection(params, this.github.repos.getForUser, mapper);
+        } else {
+            let params = {
+                org: orgName
+            };
+            repos = await this.getPagedCollection(params, this.github.repos.getForOrg, mapper);
+        }
 
         return repos;
     }
@@ -136,7 +141,7 @@ export default class GithubService {
             return new Issue(r);
         };
 
-        let issues = await GithubService.getPagedCollection(params, this.github.issues.getForRepo, mapper);
+        let issues = await this.getPagedCollection(params, this.github.issues.getForRepo, mapper);
 
         return issues;
     }
@@ -168,7 +173,7 @@ export default class GithubService {
             return new Milestone(r);
         };
 
-        let milestones = await GithubService.getPagedCollection(params, this.github.issues.getMilestones, mapper);
+        let milestones = await this.getPagedCollection(params, this.github.issues.getMilestones, mapper);
 
         return milestones;
     }

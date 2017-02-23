@@ -13,11 +13,15 @@ import * as TomCollins from "tom-collins";
 class Frontend {
 
     @Get("/urls")
-    urls(context: Context, @K.FromQuery("type") type?: string) {
+    urls(context: Context, @K.FromQuery("type") type?: "script" | "json") {
+        if (type == undefined) {
+            type = "json";
+        }
+        
         TomCollins.parseString(type, {
             optional: true,
-            pattern: ["script"]
-        })
+            pattern: ["script", "json"]
+        });
 
         if (type === "script") {
             return `document["urls"] = ${JSON.stringify(K.getRoutes())}`;
