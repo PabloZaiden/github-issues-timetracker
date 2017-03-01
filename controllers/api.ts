@@ -47,7 +47,7 @@ export default class API {
         context: Context,
         @K.FromQuery("org") org: string) {
 
-        TomCollins.parseStringNotWhitespace(org, true);
+        TomCollins.parseStringNotWhitespace(org);
 
         let gh = new GithubService(API.getToken(context));
 
@@ -62,8 +62,8 @@ export default class API {
         @K.FromQuery("org") org: string,
         @K.FromQuery("repo") repo: string) {
 
-        TomCollins.parseStringNotWhitespace(org, true);
-        TomCollins.parseStringNotWhitespace(repo, true);
+        TomCollins.parseStringNotWhitespace(org);
+        TomCollins.parseStringNotWhitespace(repo);
         let gh = new GithubService(API.getToken(context));
 
         let issues = await gh.getIssues(org, repo);
@@ -78,8 +78,8 @@ export default class API {
         @K.FromQuery("repo") repo: string,
         @K.FromQuery("state") state?: "open" | "closed" | "all") {
 
-        TomCollins.parseStringNotWhitespace(org, true, 1);
-        TomCollins.parseStringNotWhitespace(repo, true, 1);
+        TomCollins.parseStringNotWhitespace(org);
+        TomCollins.parseStringNotWhitespace(repo);
         TomCollins.parseStringPattern(state, ["open", "closed", "all"], false);
 
         let gh = new GithubService(API.getToken(context));
@@ -95,8 +95,8 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromPath("amount") amount: string) {
 
-        TomCollins.parseString(issueId, true, 1);
-        let number = TomCollins.parsePositiveIntegerNotZero(amount, true);
+        TomCollins.parseStringNotWhitespace(issueId);
+        let number = TomCollins.parsePositiveIntegerNotZero(amount);
         let timeTracking = new TimeTrackingService();
 
         let gh = new GithubService(API.getToken(context));
@@ -114,8 +114,8 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromPath("amount") amount: string) {
 
-        TomCollins.parseStringNotWhitespace(issueId, true);
-        let number = TomCollins.parsePositiveIntegerNotZero(amount, true);
+        TomCollins.parseStringNotWhitespace(issueId);
+        let number = TomCollins.parsePositiveIntegerNotZero(amount);
 
         let timeTracking = new TimeTrackingService();
 
@@ -134,7 +134,7 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromBody() body: any) {
 
-        TomCollins.parseStringNotWhitespace(issueId, true);
+        TomCollins.parseStringNotWhitespace(issueId);
         let payload = TomCollins.parse(AmountPayload, body);
 
         let timeTracking = new TimeTrackingService();
@@ -154,7 +154,7 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromBody() body: any) {
 
-        TomCollins.parseStringNotWhitespace(issueId, true);
+        TomCollins.parseStringNotWhitespace(issueId);
         let payload = TomCollins.parse(AmountPayload, body);
 
         let timeTracking = new TimeTrackingService();
@@ -173,7 +173,7 @@ export default class API {
         context: Context,
         @K.FromPath("issueId") issueId: string) {
 
-        TomCollins.parseStringNotWhitespace(issueId, true);
+        TomCollins.parseStringNotWhitespace(issueId);
 
         let timeTracking = new TimeTrackingService();
 
@@ -187,9 +187,9 @@ export default class API {
         @K.FromQuery("repo") repo: string,
         @K.FromQuery("number") numberRaw: string) {
 
-        TomCollins.parseStringNotWhitespace(org, true);
-        TomCollins.parseStringNotWhitespace(repo, true);
-        let number = TomCollins.parsePositiveIntegerNotZero(numberRaw, true);
+        TomCollins.parseStringNotWhitespace(org);
+        TomCollins.parseStringNotWhitespace(repo);
+        let number = TomCollins.parsePositiveIntegerNotZero(numberRaw);
 
         let gh = new GithubService(API.getToken(context));
         let tt = new TimeTrackingService();

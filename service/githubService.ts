@@ -39,7 +39,7 @@ export default class GithubService {
                 per_page: GithubService.perPage
             };
 
-            let page: GithubResult = await callback(fullParams);
+            let page: GithubArrayResult = await callback(fullParams);
 
             raw.push(...page.data);
             let hasNext = this.github.hasNextPage(page);
@@ -53,45 +53,12 @@ export default class GithubService {
     }
 
     async getCurrentUser() {
-        this.github.users.get()
-            .then((userData) => {
-                let u = userData;
-            })
-            .catch((err) => {
-                let e = err;
-            });
-        // TODO: replace this with the following lines when they start to work
-        //let user = await this.github.users.get();
-        //return user;
-
-
-        return new Promise<User>((resolve, reject) => {
-            Request(
-                "https://api.github.com/user",
-                {
-                    headers: {
-                        "user-agent": GithubService.userAgent
-                    },
-                    auth: {
-                        bearer: this.accessToken,
-                    }
-                },
-                (error, response, body) => {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        if (response.statusCode < 200 || response.statusCode >= 300) {
-                            throw new Error("Invalid status: " + response.statusCode);
-                        }
-                        resolve(new User(JSON.parse(body)));
-                    }
-                });
-        });
-        
+        let user: GithubResult = await this.github.users.get({});
+        return user.data;
     }
 
     async getOrganizations() {
-        let memberships: GithubResult = await this.github.users.getOrgMemberships({
+        let memberships: GithubArrayResult = await this.github.users.getOrgMemberships({
             state: "active"
         });
 
@@ -160,13 +127,13 @@ export default class GithubService {
     }
 
     async getIssue(org: string, repo: string, number: number) {
-        let issueRaw = await this.github.issues.get({
+        let issueRaw: GithubResult = await this.github.issues.get({
             owner: org,
             repo: repo,
             number: number
         });
 
-        return new Issue(issueRaw);
+        return new Issue(issueRaw.data);
     }
 
     async getMilestones(org: string, repo: string, state?: "open" | "closed" | "all") {
@@ -188,22 +155,27 @@ export default class GithubService {
     }
 
     async getMilestone(org: string, repo: string, number: number) {
-        let milestoneRaw = await this.github.issues.getMilestone({
+        let milestoneRaw: GithubResult = await this.github.issues.getMilestone({
             owner: org,
             repo: repo,
             number: number
         });
 
-        milestoneRaw.repo = repo;
-        milestoneRaw.org = org;
-        return new Milestone(milestoneRaw);
+        milestoneRaw.data.repo = repo;
+        milestoneRaw.data.org = org;
+        return new Milestone(milestoneRaw.data);
     }
 }
 
+
 interface GithubResult {
-    data: any[];
+    data: any;
     meta: {
         link: string;
         [key: string]: string;
     };
+}
+
+interface GithubArrayResult extends GithubResult {
+    data: any[];
 }
