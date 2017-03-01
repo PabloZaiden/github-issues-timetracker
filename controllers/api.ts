@@ -47,7 +47,7 @@ export default class API {
         context: Context,
         @K.FromQuery("org") org: string) {
 
-        TomCollins.parseString(org, Utils.Validations.notEmpty);
+        TomCollins.parseStringNotWhitespace(org, true);
 
         let gh = new GithubService(API.getToken(context));
 
@@ -62,9 +62,8 @@ export default class API {
         @K.FromQuery("org") org: string,
         @K.FromQuery("repo") repo: string) {
 
-        TomCollins.parseString(org, Utils.Validations.notEmpty);
-        TomCollins.parseString(repo, Utils.Validations.notEmpty);
-
+        TomCollins.parseStringNotWhitespace(org, true);
+        TomCollins.parseStringNotWhitespace(repo, true);
         let gh = new GithubService(API.getToken(context));
 
         let issues = await gh.getIssues(org, repo);
@@ -79,12 +78,9 @@ export default class API {
         @K.FromQuery("repo") repo: string,
         @K.FromQuery("state") state?: "open" | "closed" | "all") {
 
-        TomCollins.parseString(org, Utils.Validations.notEmpty);
-        TomCollins.parseString(repo, Utils.Validations.notEmpty);
-        TomCollins.parseString(state, {
-            pattern: ["open", "closed", "all"],
-            optional: true
-        });
+        TomCollins.parseStringNotWhitespace(org, true, 1);
+        TomCollins.parseStringNotWhitespace(repo, true, 1);
+        TomCollins.parseStringPattern(state, ["open", "closed", "all"], false);
 
         let gh = new GithubService(API.getToken(context));
 
@@ -99,9 +95,8 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromPath("amount") amount: string) {
 
-        TomCollins.parseString(issueId, Utils.Validations.notEmpty);
-        let number = TomCollins.parseFloat(amount, Utils.Validations.positiveNatural);
-                
+        TomCollins.parseString(issueId, true, 1);
+        let number = TomCollins.parsePositiveIntegerNotZero(amount, true);
         let timeTracking = new TimeTrackingService();
 
         let gh = new GithubService(API.getToken(context));
@@ -113,15 +108,15 @@ export default class API {
         context.response.sendStatus(200);
     }
 
-     @K.Delete("issue/:issueId/estimate/:amount")
+    @K.Delete("issue/:issueId/estimate/:amount")
     async removeEstimate(
         context: Context,
         @K.FromPath("issueId") issueId: string,
         @K.FromPath("amount") amount: string) {
 
-        TomCollins.parseString(issueId, Utils.Validations.notEmpty);
-        let number = TomCollins.parseFloat(amount, Utils.Validations.positiveNatural);
-                
+        TomCollins.parseStringNotWhitespace(issueId, true);
+        let number = TomCollins.parsePositiveIntegerNotZero(amount, true);
+
         let timeTracking = new TimeTrackingService();
 
         let gh = new GithubService(API.getToken(context));
@@ -139,9 +134,9 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromBody() body: any) {
 
-        TomCollins.parseString(issueId, Utils.Validations.notEmpty);
+        TomCollins.parseStringNotWhitespace(issueId, true);
         let payload = TomCollins.parse(AmountPayload, body);
-        
+
         let timeTracking = new TimeTrackingService();
 
         let gh = new GithubService(API.getToken(context));
@@ -159,7 +154,7 @@ export default class API {
         @K.FromPath("issueId") issueId: string,
         @K.FromBody() body: any) {
 
-        TomCollins.parseString(issueId, Utils.Validations.notEmpty);
+        TomCollins.parseStringNotWhitespace(issueId, true);
         let payload = TomCollins.parse(AmountPayload, body);
 
         let timeTracking = new TimeTrackingService();
@@ -178,7 +173,7 @@ export default class API {
         context: Context,
         @K.FromPath("issueId") issueId: string) {
 
-        TomCollins.parseString(issueId, Utils.Validations.notEmpty);
+        TomCollins.parseStringNotWhitespace(issueId, true);
 
         let timeTracking = new TimeTrackingService();
 
@@ -192,9 +187,9 @@ export default class API {
         @K.FromQuery("repo") repo: string,
         @K.FromQuery("number") numberRaw: string) {
 
-        TomCollins.parseString(org, Utils.Validations.notEmpty);
-        TomCollins.parseString(repo, Utils.Validations.notEmpty);
-        let number = TomCollins.parseFloat(numberRaw, Utils.Validations.positiveNatural);
+        TomCollins.parseStringNotWhitespace(org, true);
+        TomCollins.parseStringNotWhitespace(repo, true);
+        let number = TomCollins.parsePositiveIntegerNotZero(numberRaw, true);
 
         let gh = new GithubService(API.getToken(context));
         let tt = new TimeTrackingService();

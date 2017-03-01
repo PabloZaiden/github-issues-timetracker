@@ -39,10 +39,10 @@ export default class GithubService {
                 per_page: GithubService.perPage
             };
 
-            let page: any[] = await callback(fullParams);
+            let page: GithubResult = await callback(fullParams);
 
-            raw.push(...page);
-            let hasNext = this.github.hasNextPage(page as any);
+            raw.push(...page.data);
+            let hasNext = this.github.hasNextPage(page);
             more = hasNext != undefined;
             current++;
         }
@@ -53,9 +53,17 @@ export default class GithubService {
     }
 
     async getCurrentUser() {
+        this.github.users.get()
+            .then((userData) => {
+                let u = userData;
+            })
+            .catch((err) => {
+                let e = err;
+            });
         // TODO: replace this with the following lines when they start to work
         //let user = await this.github.users.get();
         //return user;
+
 
         return new Promise<User>((resolve, reject) => {
             Request(
@@ -79,14 +87,15 @@ export default class GithubService {
                     }
                 });
         });
+        
     }
 
     async getOrganizations() {
-        let memberships: any[] = await this.github.users.getOrgMemberships({
+        let memberships: GithubResult = await this.github.users.getOrgMemberships({
             state: "active"
         });
 
-        let orgs = memberships.map(m => {
+        let orgs = memberships.data.map(m => {
             return new Organization(m.organization);
         });
 
@@ -189,4 +198,12 @@ export default class GithubService {
         milestoneRaw.org = org;
         return new Milestone(milestoneRaw);
     }
+}
+
+interface GithubResult {
+    data: any[];
+    meta: {
+        link: string;
+        [key: string]: string;
+    };
 }
