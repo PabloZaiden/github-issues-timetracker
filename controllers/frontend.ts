@@ -42,7 +42,7 @@ class Frontend {
 
     @Get()
     async quickUrl(context: Context, @K.FromQuery("url") url: string) {
-        TomCollins.parseStringNotWhitespace(url, true);
+        TomCollins.parseNotWhitespace(url, true);
 
         let githubUrlBase = ["https://github.com/", "https://www.github.com/", "https://api.github.com/repos/"];
 
@@ -94,9 +94,9 @@ class Frontend {
         @K.FromQuery("repo") repo: string,
         @K.FromQuery("number") numberRaw: string): Promise<K.Renderable> {
 
-        TomCollins.parseStringNotWhitespace(org, true);
-        TomCollins.parseStringNotWhitespace(repo, true);
-        let number = TomCollins.parsePositiveIntegerNotZero(numberRaw, true);
+        TomCollins.parseNotWhitespace(org, true);
+        TomCollins.parseNotWhitespace(repo, true);
+        let number = TomCollins.parsePositiveNotZeroInteger(numberRaw, true);
 
 
         let gh = new GithubService(API.getToken(context));
@@ -119,9 +119,9 @@ class Frontend {
         @K.FromQuery("repo") repo: string,
         @K.FromQuery("number") numberRaw: string): Promise<K.Renderable> {
 
-        TomCollins.parseStringNotWhitespace(org, true);
-        TomCollins.parseStringNotWhitespace(repo, true);
-        let number = TomCollins.parsePositiveIntegerNotZero(numberRaw, true);
+        TomCollins.parseNotWhitespace(org, true);
+        TomCollins.parseNotWhitespace(repo, true);
+        let number = TomCollins.parsePositiveNotZeroInteger(numberRaw, true);
 
         let gh = new GithubService(API.getToken(context));
 

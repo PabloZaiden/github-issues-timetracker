@@ -53,7 +53,7 @@ export default class GithubService {
     }
 
     async getCurrentUser() {
-        let user: GithubResult = await this.github.users.get({});
+        let user: GithubResult = await (this.github as any).users.get({});
         return user.data;
     }
 

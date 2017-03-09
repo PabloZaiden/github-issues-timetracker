@@ -1,12 +1,9 @@
 import Utils from "../utils";
 
-import { Field, PredefinedMaps } from "tom-collins";
+import { Field, PredefinedMaps, PositiveInteger } from "tom-collins";
 
 export class AmountPayload {
-    @Field({ 
-        typeConstraints: Utils.Validations.positiveNatural,
-        maps: PredefinedMaps.stringToNumber
-    })
+    @PositiveInteger()
     amount: number;
 }
 
