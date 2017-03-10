@@ -78,7 +78,7 @@ export default class App {
             done(null, user);
         });
 
-        App.securityProvider = new GithubSecurityProvider("/auth/callback", "read:org user:email");
+        App.securityProvider = new GithubSecurityProvider("/auth/callback");
     }
 
     public static start(): void {

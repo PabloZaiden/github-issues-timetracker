@@ -18,7 +18,9 @@ class Frontend {
             type = "json";
         }
 
-        TomCollins.parseStringPattern(type, ["script", "json"], false);
+        TomCollins.parseStringPattern(type, ["script", "json"], {
+            optional: true
+        });
 
         if (type === "script") {
             return `document["urls"] = ${JSON.stringify(K.getRoutes())}`;
@@ -42,7 +44,7 @@ class Frontend {
 
     @Get()
     async quickUrl(context: Context, @K.FromQuery("url") url: string) {
-        TomCollins.parseNotWhitespace(url, true);
+        TomCollins.parseUrl(url);
 
         let githubUrlBase = ["https://github.com/", "https://www.github.com/", "https://api.github.com/repos/"];
 
@@ -94,9 +96,9 @@ class Frontend {
         @K.FromQuery("repo") repo: string,
         @K.FromQuery("number") numberRaw: string): Promise<K.Renderable> {
 
-        TomCollins.parseNotWhitespace(org, true);
-        TomCollins.parseNotWhitespace(repo, true);
-        let number = TomCollins.parsePositiveNotZeroInteger(numberRaw, true);
+        TomCollins.parseNotWhitespace(org);
+        TomCollins.parseNotWhitespace(repo);
+        let number = TomCollins.parsePositiveNotZeroInteger(numberRaw);
 
 
         let gh = new GithubService(API.getToken(context));
@@ -119,9 +121,9 @@ class Frontend {
         @K.FromQuery("repo") repo: string,
         @K.FromQuery("number") numberRaw: string): Promise<K.Renderable> {
 
-        TomCollins.parseNotWhitespace(org, true);
-        TomCollins.parseNotWhitespace(repo, true);
-        let number = TomCollins.parsePositiveNotZeroInteger(numberRaw, true);
+        TomCollins.parseNotWhitespace(org);
+        TomCollins.parseNotWhitespace(repo);
+        let number = TomCollins.parsePositiveNotZeroInteger(numberRaw);
 
         let gh = new GithubService(API.getToken(context));
 

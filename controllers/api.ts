@@ -80,7 +80,9 @@ export default class API {
 
         TomCollins.parseNotWhitespace(org);
         TomCollins.parseNotWhitespace(repo);
-        TomCollins.parseStringPattern(state, ["open", "closed", "all"], false);
+        TomCollins.parseStringPattern(state, ["open", "closed", "all"], {
+            optional: true
+        });
 
         let gh = new GithubService(API.getToken(context));
 
