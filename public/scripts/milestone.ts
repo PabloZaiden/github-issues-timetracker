@@ -1,4 +1,4 @@
-import {Dictionary, DayEntry} from "../../models/api";
+import { Dictionary, DayEntry } from "../../models/api";
 
 class Milestone {
     private milestone: number;
@@ -40,9 +40,13 @@ class Milestone {
         let values = [];
         for (let key in data) {
             let pending = data[key].currentEstimate - data[key].totalEffort;
-            
+
+            if (pending < 0) {
+                pending = 0;
+            }
+
             if (values.length != 0 || pending > 0) {
-                values.push({x: new Date(key), y: pending });
+                values.push({ x: new Date(key), y: pending });
             }
         }
 
@@ -53,15 +57,48 @@ class Milestone {
         this.burndown.show();
 
         var chart = new CanvasJS.Chart("burndown", {
-			title: {
-				text: "Burndown chart"
-			},
-			data: [{
-				type: "line",
-				dataPoints: values
-			}]
-		});
-		chart.render();
+            title: {
+                text: "Burndown chart"
+            },
+            data: [{
+                type: "line",
+                dataPoints: values
+            }],
+            axisX: {
+                valueFormatString: "YYYY-MM-DD",
+                interval: 1,
+                intervalType: "day",
+                title: "Date"
+            },
+            axisY: {
+                title: "Pending Hours",
+
+            }
+        });
+        chart.render();
+    }
+
+    private getXPoint(date: Date) {
+        return `${date.getFullYear()}-${this.getMonth(date)}-${this.getDayOfTheMonth(date)}`;
+    }
+
+    private getMonth(date: Date) {
+        let month = date.getMonth() + 1;
+
+        if (month < 10) {
+            return "0" + month.toString();
+        } else {
+            return month.toString();
+        }
+    }
+
+    private getDayOfTheMonth(date: Date) {
+        let day = date.getDate();
+        if (day < 10) {
+            return "0" + day.toString();
+        } else {
+            return day.toString();
+        }
     }
 }
 
