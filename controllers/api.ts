@@ -7,7 +7,6 @@ import * as K from "kwyjibo";
 import App from "../app";
 import GithubService from "../service/githubService";
 import * as TomCollins from "tom-collins";
-import CacheService from "../service/cacheService";
 
 @K.Middleware(App.authorize)
 @Controller("/api")
@@ -34,7 +33,7 @@ export default class API {
         return token;
     }
 
-    @K.ActionMiddleware(CacheService.Long)
+    
     @K.Get()
     async organizations(context: Context) {
         let gh = new GithubService(API.getToken(context));
@@ -44,7 +43,7 @@ export default class API {
         return orgs;
     }
 
-    @K.ActionMiddleware(CacheService.Default)
+    
     @K.Get()
     async repos(
         context: Context,
@@ -59,7 +58,6 @@ export default class API {
         return repos;
     }
 
-    @K.ActionMiddleware(CacheService.Short)
     @K.Get()
     async issues(
         context: Context,
@@ -75,7 +73,7 @@ export default class API {
         return issues;
     }
 
-    @K.ActionMiddleware(CacheService.Default)
+    
     @K.Get()
     async milestones(
         context: Context,
@@ -187,7 +185,6 @@ export default class API {
         return timeTracking.getTimeTracking(issueId);
     }
 
-    @K.ActionMiddleware(CacheService.Short)
     @K.Get("/timeTrackingPerDayByMilestone")
     async timeTrackingPerDayByMilestone(
         context: Context,
@@ -275,7 +272,7 @@ export default class API {
         return retObj;
     }
 
-    @K.ActionMiddleware(CacheService.Long)
+    
     @K.Get()
     async user(context: Context) {
         let gh = new GithubService(API.getToken(context));

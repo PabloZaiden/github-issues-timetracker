@@ -7,13 +7,11 @@ import App from "../app";
 import GithubService from "../service/githubService";
 import API from "./api";
 import * as TomCollins from "tom-collins";
-import CacheService from "../service/cacheService";
 
 @K.Middleware(App.authorize)
 @Controller("/frontend")
 class Frontend {
 
-    @K.ActionMiddleware(CacheService.Eternal)
     @Get("/urls")
     urls(context: Context, @K.FromQuery("type") type?: "script" | "json") {
         if (type == undefined) {
@@ -91,7 +89,6 @@ class Frontend {
         context.response.redirect(baseUrl + `?org=${org}&repo=${repo}&number=${number}`);
     }
 
-    @K.ActionMiddleware(CacheService.Short)
     @Get()
     async issue(
         context: Context,
@@ -117,7 +114,6 @@ class Frontend {
         };
     }
 
-    @K.ActionMiddleware(CacheService.Short)
     @Get()
     async milestone(
         context: Context,
